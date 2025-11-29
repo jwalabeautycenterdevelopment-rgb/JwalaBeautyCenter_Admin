@@ -14,6 +14,8 @@ import Brands from './pages/Brands/Brands';
 import Offer from './pages/Offer/Offer';
 import Profile from './pages/Profile/Profile';
 import Deals from './pages/Deals/Deals';
+import Type from './pages/Type/Type';
+import TypeName from './pages/TypeName/TypeName';
 
 function App() {
   return (
@@ -41,6 +43,8 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/deals" element={<Deals />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/type" element={<Type />} />
+          <Route path="/typename" element={<TypeName />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

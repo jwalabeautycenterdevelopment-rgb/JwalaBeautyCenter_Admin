@@ -3,11 +3,9 @@ import { NavLink } from "react-router-dom";
 
 import {
     AiOutlineDashboard,
-    AiOutlineGift,
-    AiOutlineSetting,
+    AiOutlineSetting
 } from "react-icons/ai";
-import { MdAddPhotoAlternate, MdLocalOffer, MdPersonSearch } from "react-icons/md";
-
+import { MdAddPhotoAlternate, MdPersonSearch } from "react-icons/md";
 import {
     LuFolder,
     LuFolders,
@@ -23,9 +21,10 @@ import { FaGift } from "react-icons/fa";
 
 const Sidebar = () => {
     const [openCatalog, setOpenCatalog] = useState(true);
+    const [openType, setOpenType] = useState(false);
 
     return (
-        <aside className=" h-screen bg-white shadow-md flex flex-col border-r border-gray-300">
+        <aside className="h-screen bg-white shadow-md flex flex-col border-r border-gray-300">
             <div className="flex items-center h-16 border-b border-gray-200 px-4">
                 <img src={logo} alt="Logo" className="h-10 w-auto" />
             </div>
@@ -65,7 +64,6 @@ const Sidebar = () => {
                     </button>
                     {openCatalog && (
                         <div className="ml-8 flex flex-col gap-1 mt-1">
-
                             <NavLink
                                 to="/parent-categories"
                                 className={({ isActive }) =>
@@ -76,17 +74,6 @@ const Sidebar = () => {
                                 <LuFolders className="text-lg" />
                                 Parent Categories
                             </NavLink>
-                            {/* <NavLink
-                                to="/categories"
-                                className={({ isActive }) =>
-                                    `flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-orange-600 
-                                    ${isActive ? "text-orange-600 font-medium" : ""}`
-                                }
-                            >
-                                <LuFolder className="text-lg" />
-                                Categories
-                            </NavLink> */}
-
                             <NavLink
                                 to="/subcategories"
                                 className={({ isActive }) =>
@@ -109,6 +96,43 @@ const Sidebar = () => {
                             </NavLink>
                         </div>
                     )}
+                    {/* <button
+                        onClick={() => setOpenType(!openType)}
+                        className="flex items-center justify-between w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded-md"
+                    >
+                        <div className="flex items-center gap-3">
+                            <LuTag className="text-xl" />
+                            Types
+                        </div>
+                        <LuChevronDown
+                            className={`transition-transform duration-200 ${openType ? "rotate-180" : ""}`}
+                        />
+                    </button>
+
+                    {openType && (
+                        <div className="ml-8 flex flex-col gap-1 mt-1">
+                            <NavLink
+                                to="/type"
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-orange-600 
+                                    ${isActive ? "text-orange-600 font-medium" : ""}`
+                                }
+                            >
+                                <LuFolder className="text-lg" />
+                                Types
+                            </NavLink>
+                            <NavLink
+                                to="/typename"
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-orange-600 
+                                    ${isActive ? "text-orange-600 font-medium" : ""}`
+                                }
+                            >
+                                <LuGitBranch className="text-lg" />
+                                Type Name
+                            </NavLink>
+                        </div>
+                    )} */}
                     <NavLink
                         to="/ad-banner"
                         className={({ isActive }) =>
@@ -159,6 +183,7 @@ const Sidebar = () => {
                         <LuTag className="text-xl" />
                         Brands
                     </NavLink>
+
                 </nav>
             </div>
         </aside>

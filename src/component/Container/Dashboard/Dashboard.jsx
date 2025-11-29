@@ -10,7 +10,6 @@ import {
     TrendingUpDown
 } from "lucide-react";
 
-
 const stats = [
     {
         title: "Total Orders",

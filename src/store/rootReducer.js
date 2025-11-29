@@ -9,6 +9,7 @@ import offerReducer from "./slice/offersSlice";
 import authmeReducer from "./slice/authme";
 import productReducer from "./slice/productSlice";
 import dealsReducer from "./slice/dealsSlice";
+import typeReducer from "./slice/typeSlice";
 const reducer = combineReducers({
   login: loginReducer,
   parentCategory: parentCategoryReducer,
@@ -20,5 +21,6 @@ const reducer = combineReducers({
   authme: authmeReducer,
   product: productReducer,
   deals: dealsReducer,
+  type: typeReducer,
 });
 export default reducer;
