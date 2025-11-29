@@ -24,7 +24,7 @@ const BrandSection = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isModalAddOpen, setIsModalAddOpen] = useState(false);
     console.log(isModalAddOpen);
-    
+
     const [selectedBrandId, setSelectedBrandId] = useState(null);
     const [updateData, setUpdateData] = useState(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
@@ -130,16 +130,6 @@ const BrandSection = () => {
                                     />
                                 </div>
                             )}
-                            {brand?.coverImage && (
-                                <div className="my-2">
-                                    <Image
-                                        src={brand?.coverImage}
-                                        alt={brand?.name}
-                                        className="w-full  object-cover rounded-lg h-[140px]"
-                                    />
-                                </div>
-                            )}
-
                             <div className="flex items-center justify-between border-t border-gray-100 mt-3 pt-2">
                                 <span className="text-gray-500 font-medium text-sm">Status:</span>
                                 <span
@@ -154,7 +144,6 @@ const BrandSection = () => {
                         </div>
                     ))}
                 </div>
-
                 {allBrands?.length === 0 && (
                     <div className="text-center py-12">
                         <p className="text-gray-500 text-lg">

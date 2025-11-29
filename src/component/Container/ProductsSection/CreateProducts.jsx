@@ -8,13 +8,14 @@ import Image from "../../../common/Image";
 import { warningAlert, successAlert } from "../../../utils/alertService";
 import { getTypeNamesByTypeId, getTypes, createTypeName } from "../../../store/slice/typeSlice";
 import { HexColorPicker } from "react-colorful";
+import { getColorName } from "../../../utils/getColorName";
+import { slugify } from "../../../utils/slugify";
 
 const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const dispatch = useDispatch();
     const { allSubCategories } = useSelector((state) => state.subcategory);
     const { allBrands } = useSelector((state) => state.brands);
     const { types, typeNamesById } = useSelector((state) => state.type);
-    const [tagInput, setTagInput] = useState("");
     const [isShowVariant, setIsShowVariant] = useState(false);
 
     const [variantInput, setVariantInput] = useState({
@@ -25,18 +26,22 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
         stock: "",
         variantImage: [],
         type: "",
-        typeNameId: "",
+        weight: "",
     });
 
     const [showCreateTypeName, setShowCreateTypeName] = useState(false);
     const [newTypeNameValue, setNewTypeNameValue] = useState("");
     const [newColorCode, setNewColorCode] = useState("#ff69b4");
     const [newUnit, setNewUnit] = useState("");
+    const [keywordInput, setKeywordInput] = useState("");
 
     const [form, setForm] = useState({
         name: "", description: "", price: "", offerPrice: "", stock: "", category: "", brand: "",
         tags: [], images: [], isBestSeller: false, isNewArrival: false,
         manufacturingDate: "", expiryDate: "", variants: [], metaTitle: "", metaDescription: "",
+        keywords: [],
+        canonicalTag: "",
+        slug: "",
     });
 
     useEffect(() => {
@@ -60,8 +65,9 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                 price: formData?.price || "",
                 offerPrice: formData?.offerPrice || "",
                 stock: formData?.stock || "",
-                category: formData?.category || "",
-                brand: formData?.brand || "",
+                category: formData?.category?._id || "",
+                brand: formData?.brand?._id || "",
+                slug: formData?.slug || "",
                 tags: Array.isArray(formData?.tags) ? formData.tags : [],
                 images: Array.isArray(formData?.productImages) ? formData.productImages : [],
                 isBestSeller: !!formData?.isBestSeller,
@@ -77,11 +83,18 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         stock: v?.stock?.toString() || "",
                         variantImage: Array.isArray(v?.variantImages) ? v.variantImages : [],
                         variantName: v?.name || "",
-                        type: v?.type
+                        type: v?.type,
+                        weight: v?.weight
                     }))
                     : [],
                 metaTitle: formData?.metaTitle || "",
                 metaDescription: formData?.metaDescription || "",
+                canonicalTag: formData?.canonicalTag,
+                keywords: Array.isArray(formData?.keywords)
+                    ? formData.keywords
+                    : (typeof formData?.keywords === "string"
+                        ? formData.keywords.split(",").map(k => k.trim()).filter(Boolean)
+                        : []),
             });
 
             if (formData?.variants?.length > 0) setIsShowVariant(true);
@@ -93,8 +106,35 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
         setForm(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     };
 
+    const handleNameChange = (e) => {
+        const value = e.target.value;
+
+        setForm((prev) => ({
+            ...prev,
+            name: value,
+            slug: slugify(value),
+        }));
+    };
+
+    const handleSlugChange = (e) => {
+        const value = e.target.value;
+        setForm((prev) => ({
+            ...prev,
+            slug: slugify(value),
+        }));
+    };
     const handleToggleVariant = () => setIsShowVariant(prev => !prev);
 
+    const handleAddKeyword = () => {
+        if (keywordInput.trim() && !form.keywords.includes(keywordInput.trim())) {
+            setForm(prev => ({ ...prev, keywords: [...prev.keywords, keywordInput.trim()] }));
+            setKeywordInput("");
+        }
+    };
+
+    const handleRemoveKeyword = (keyword) => {
+        setForm(prev => ({ ...prev, keywords: prev.keywords.filter(k => k !== keyword) }));
+    };
     const handleMainImageChange = (e) => {
         const files = Array.from(e.target.files || e.dataTransfer?.files || []);
         const currentNew = form.images.filter(img => img instanceof File).length;
@@ -234,6 +274,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
             price: "",
             offerPrice: "",
             stock: "",
+            weight: "",
             variantImage: [],
             typeNameId: ""
         }));
@@ -252,13 +293,6 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
         setForm(prev => ({ ...prev, variants: prev.variants.filter((_, i) => i !== index) }));
     };
 
-    const handleAddTag = () => {
-        if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
-            setForm(prev => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
-            setTagInput("");
-        }
-    };
-
     const handleRemoveTag = (tag) => {
         setForm(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }));
     };
@@ -270,6 +304,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
         formDataToSubmit.append("name", form.name || "");
         formDataToSubmit.append("description", form.description || "");
         formDataToSubmit.append("price", form.price || "");
+        formDataToSubmit.append("slug", form.slug || "");
         formDataToSubmit.append("offerPrice", form.offerPrice || "");
         formDataToSubmit.append("stock", form.stock || "");
         formDataToSubmit.append("category", form.category || "");
@@ -280,6 +315,10 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
         formDataToSubmit.append("expiryDate", form.expiryDate || "");
         formDataToSubmit.append("metaTitle", form.metaTitle || "");
         formDataToSubmit.append("metaDescription", form.metaDescription || "");
+        formDataToSubmit.append("canonicalTag", form.canonicalTag || "");
+        (form.keywords || []).forEach(keyword => {
+            formDataToSubmit.append("keywords[]", keyword);
+        });
 
         (form.tags || []).forEach(tag => {
             formDataToSubmit.append("tags[]", tag);
@@ -310,6 +349,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
             formDataToSubmit.append(`variants[${i}][price]`, variant.price || "");
             formDataToSubmit.append(`variants[${i}][offerPrice]`, variant.offerPrice || "");
             formDataToSubmit.append(`variants[${i}][stock]`, variant.stock || "");
+            formDataToSubmit.append(`variants[${i}][weight]`, variant.weight || "");
         });
         onSubmit(formDataToSubmit);
     };
@@ -365,8 +405,8 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         <input
                             type="text"
                             name="name"
-                            value={form.name}
-                            onChange={handleChange}
+                            value={form?.name}
+                            onChange={handleNameChange}
                             required
                             className="w-full p-3 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
                             placeholder="Enter product name"
@@ -376,14 +416,26 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         <label className="block text-sm font-medium mb-1">Category *</label>
                         <select name="category" value={form?.category} onChange={handleChange} required className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300">
                             <option value="">Select Category</option>
-                            {allSubCategories?.map(cat => <option key={cat._id} value={cat._id}>{cat.name}</option>)}
+                            {allSubCategories?.map(cat => <option key={cat?._id} value={cat?._id}>{cat?.name}</option>)}
                         </select>
                     </div>
                 </div>
+                <div>
+                    <label className="block text-sm font-medium mb-1">Product Slug *</label>
+                    <input
+                        type="text"
+                        name="slug"
+                        value={form?.slug}
+                        onChange={handleSlugChange}
+                        required
+                        className="w-full p-3 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                        placeholder="Slug"
+                    />
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-medium mb-1">Price *</label>
-                        <input type="number" name="price" value={form?.price} onChange={handleChange} required className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                        <label className="block text-sm font-medium mb-1">Price </label>
+                        <input type="number" name="price" value={form?.price} onChange={handleChange}  className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">Discount Price</label>
@@ -418,11 +470,23 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                     <textarea name="description" value={form?.description} onChange={handleChange} rows={5} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300"></textarea>
                 </div>
                 <ImageUploadBox images={form?.images} onChange={handleMainImageChange} onRemove={handleRemoveMainImage} label="Main Product Images (Max 5)" />
-                <div className="flex justify-between items-center py-4 border-t border-b border-gray-300">
-                    <h3 className="text-xl font-semibold">Product Variants (Optional)</h3>
+                <div className="flex justify-between items-center py-4 border-t  border-gray-300">
+                    <h3 className="text-xl font-semibold">
+                        Product Variants {form.images.length > 0 ? "(Image selected, variants locked)" : "(Optional)"}
+                    </h3>
                     <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" checked={isShowVariant} onChange={handleToggleVariant} className="sr-only peer" />
-                        <div className="w-12 h-6 bg-gray-300 rounded-full peer peer-checked:bg-pink-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-6"></div>
+                        <input
+                            type="checkbox"
+                            checked={isShowVariant}
+                            onChange={handleToggleVariant}
+                            className="sr-only peer"
+                            disabled={form.images.length > 0}
+                        />
+                        <div className="w-12 h-6 bg-gray-300 rounded-full peer peer-checked:bg-pink-600 
+    after:content-[''] after:absolute after:top-0.5 after:left-0.5 
+    after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
+    peer-checked:after:translate-x-6">
+                        </div>
                     </label>
                 </div>
                 {isShowVariant && (
@@ -441,6 +505,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                                     <input type="number" placeholder="Price *" value={variant?.price} onChange={e => handleVariantChange(index, "price", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                                     <input type="number" placeholder="Discount Price" value={variant?.offerPrice} onChange={e => handleVariantChange(index, "offerPrice", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                                     <input type="number" placeholder="Stock" value={variant?.stock} onChange={e => handleVariantChange(index, "stock", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                                    <input type="text" placeholder="Weight" value={variant?.stock} onChange={e => handleVariantChange(index, "weight", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                                 </div>
                                 <ImageUploadBox images={variant?.variantImage || []} onChange={e => handleExistingVariantImageChange(e, index)} onRemove={i => handleRemoveExistingVariantImage(index, i)} label={`Variant Images - ${variant.name || "Variant"} (Max 5)`} />
                             </div>
@@ -448,7 +513,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         <div className="p-8 border-4 border-dashed border-pink-300 rounded-2xl bg-pink-50">
                             <h4 className="text-xl font-bold text-pink-800 mb-6">Add New Variant</h4>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                                <input type="text" value={variantInput?.variantName} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" placeholder="name" onChange={e => setVariantInput(p => ({ ...p, variantName: e.target.value }))} />
+                                <input type="text" value={variantInput?.variantName} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" placeholder="Variant Name" onChange={e => setVariantInput(p => ({ ...p, variantName: e.target.value }))} />
                                 <select value={variantInput?.type} onChange={handleTypeChange} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300">
                                     <option value="">Select Type</option>
                                     {types?.map(t => (
@@ -466,7 +531,6 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                                             const color = tn.colorCode || (isColor ? tn.name.trim() : null);
                                             const label = `${tn.name} ${tn.unit ? `(${tn.unit})` : ''}`.trim();
                                             const displayLabel = isColor ? `● ${label}` : label;
-
                                             return (
                                                 <option
                                                     key={tn._id}
@@ -494,7 +558,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                             {showCreateTypeName && currentType && (
                                 <div className="p-8 bg-white rounded-2xl border-4 border-pink-500 shadow-2xl mb-8 -mx-8">
                                     <h5 className="text-2xl font-bold text-pink-800 mb-8 text-center">
-                                        Create New {currentType.name}
+                                        Create New {currentType?.name}
                                     </h5>
                                     {currentType?.displayType === "color" ? (
                                         <div className="space-y-6 text-center">
@@ -502,6 +566,11 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                                                 Variant name will be saved as:
                                                 <span className="block font-mono text-3xl font-bold text-pink-700 mt-2">
                                                     {newColorCode}
+                                                </span>
+                                                <span>
+                                                    {
+                                                        getColorName(newColorCode)
+                                                    }
                                                 </span>
                                             </p>
                                             <div className="flex justify-center">
@@ -518,12 +587,12 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                                     ) : currentType?.displayType === "unit" ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name (e.g. 250 ml)</label>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                                                 <input
                                                     type="text"
                                                     value={newTypeNameValue}
                                                     onChange={(e) => setNewTypeNameValue(e.target.value)}
-                                                    placeholder="250 ml"
+                                                    placeholder="(e.g. 250)"
                                                     className="w-full p-5 border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400 text-lg"
                                                     required
                                                 />
@@ -534,7 +603,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                                                     type="text"
                                                     value={newUnit}
                                                     onChange={(e) => setNewUnit(e.target.value)}
-                                                    placeholder="ml, gm, kg, pcs"
+                                                    placeholder="(e.g kg, g, ml)"
                                                     className="w-full p-5 border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400 text-lg"
                                                     required
                                                 />
@@ -546,7 +615,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                                                 type="text"
                                                 value={newTypeNameValue}
                                                 onChange={(e) => setNewTypeNameValue(e.target.value)}
-                                                placeholder="Enter value (e.g. Small, Large, XL)"
+                                                placeholder="Enter value (e.g. Apple,Orange)"
                                                 className="w-full p-6 text-xl border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400 text-center font-medium"
                                                 required
                                             />
@@ -576,35 +645,91 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                                 </div>
                             )}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                <input type="number" placeholder="Price *" value={variantInput.price} onChange={e => setVariantInput(p => ({ ...p, price: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
-                                <input type="number" placeholder="Discount Price" value={variantInput.offerPrice} onChange={e => setVariantInput(p => ({ ...p, offerPrice: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
-                                <input type="number" placeholder="Stock" value={variantInput.stock} onChange={e => setVariantInput(p => ({ ...p, stock: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
+                                <input type="number" placeholder="Price *" value={variantInput?.price} onChange={e => setVariantInput(p => ({ ...p, price: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
+                                <input type="number" placeholder="Discount Price" value={variantInput?.offerPrice} onChange={e => setVariantInput(p => ({ ...p, offerPrice: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
+                                <input type="number" placeholder="Stock" value={variantInput?.stock} onChange={e => setVariantInput(p => ({ ...p, stock: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
+                                <input type="text" placeholder="Weight" value={variantInput?.weight} onChange={e => setVariantInput(p => ({ ...p, weight: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
                             </div>
-                            <ImageUploadBox images={variantInput.variantImage} onChange={handleVariantInputImageChange} onRemove={handleRemoveVariantInputImage} label="Variant Images (Optional)" />
+                            <ImageUploadBox images={variantInput?.variantImage} onChange={handleVariantInputImageChange} onRemove={handleRemoveVariantInputImage} label="Variant Images (Optional)" />
                             <button type="button" onClick={handleAddVariant} className="w-full mt-8 py-4 bg-pink-600 text-white text-lg font-bold rounded-xl hover:bg-pink-700 transition">
                                 + Add Variant
                             </button>
                         </div>
                     </div>
                 )}
-                <div className="space-y-8">
-                    <div className="flex gap-10">
+                <div className="space-y-8 ">
+                    <div className="flex gap-10 border-b pb-2 border-gray-300">
                         <label className="flex items-center gap-3 text-lg">
-                            <input type="checkbox" name="isBestSeller" checked={form.isBestSeller} onChange={handleChange} className="w-6 h-6 text-pink-600" />
+                            <input type="checkbox" name="isBestSeller" checked={form?.isBestSeller} onChange={handleChange} className="w-6 h-6 text-pink-600" />
                             <span>Best Seller</span>
                         </label>
                         <label className="flex items-center gap-3 text-lg">
-                            <input type="checkbox" name="isNewArrival" checked={form.isNewArrival} onChange={handleChange} className="w-6 h-6 text-pink-600" />
+                            <input type="checkbox" name="isNewArrival" checked={form?.isNewArrival} onChange={handleChange} className="w-6 h-6 text-pink-600" />
                             <span>New Arrival</span>
                         </label>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-2">Tags</label>
-                        <div className="flex gap-3">
-                            <input type="text" value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyPress={e => e.key === "Enter" && (e.preventDefault(), handleAddTag())} placeholder="Type tag + Enter" className="flex-1 p-3 border border-pink-300 rounded-lg" />
-                            <button type="button" onClick={handleAddTag} className="px-8 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700">Add</button>
+                        <div>
+                            <h5 className="text-lg font-semibold mb-3">SEO</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Meta Title</label>
+                                    <input
+                                        type="text"
+                                        name="metaTitle"
+                                        value={form?.metaTitle}
+                                        onChange={handleChange}
+                                        placeholder="SEO Meta Title"
+                                        className="w-full p-3 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-400"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Canonical URL</label>
+                                    <input
+                                        type="url"
+                                        name="canonicalTag"
+                                        value={form?.canonicalTag}
+                                        onChange={handleChange}
+                                        placeholder="https://yoursite.com/old-page"
+                                        className="w-full p-3 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-400"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Keywords (SEO)</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={keywordInput}
+                                            onChange={(e) => setKeywordInput(e.target.value)}
+                                            onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddKeyword())}
+                                            placeholder="Type + Enter"
+                                            className="flex-1 p-3 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-400"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddKeyword}
+                                            className="px-4 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
+                                        >
+                                            Add
+                                        </button>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        {form?.keywords.map((kw, i) => (
+                                            <span
+                                                key={i}
+                                                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium"
+                                            >
+                                                {kw}
+                                                <button type="button" onClick={() => handleRemoveKeyword(kw)}>
+                                                    <FaTimes size={14} />
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex flex-wrap gap-3 mt-4">
+                        <div className="flex flex-wrap gap-3">
                             {form?.tags?.map((tag, i) => (
                                 <span key={i} className="inline-flex items-center gap-2 px-5 py-3 bg-pink-200 text-pink-800 rounded-full text-sm font-medium">
                                     {tag}

@@ -22,7 +22,6 @@ const CreateBrands = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }
         brandLogo: null,
         coverImage: null,
         previewBrandLogo: null,
-        previewCoverImage: null,
     });
 
     useEffect(() => {
@@ -34,7 +33,6 @@ const CreateBrands = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }
                 brandLogo: null,
                 coverImage: null,
                 previewBrandLogo: upDateData?.logo || upDateData?.brandLogo || null,
-                previewCoverImage: upDateData?.coverImage || null,
             });
         } else {
             resetForm();
@@ -62,7 +60,6 @@ const CreateBrands = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }
             brandLogo: null,
             coverImage: null,
             previewBrandLogo: null,
-            previewCoverImage: null,
         });
         setUpdateData?.(null);
     };
@@ -87,16 +84,12 @@ const CreateBrands = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }
         const url = URL.createObjectURL(file);
         if (field === "brandLogo") {
             setForm((prev) => ({ ...prev, brandLogo: file, previewBrandLogo: url }));
-        } else if (field === "coverImage") {
-            setForm((prev) => ({ ...prev, coverImage: file, previewCoverImage: url }));
         }
     };
 
     const removePreview = (field) => {
         if (field === "brandLogo") {
             setForm((prev) => ({ ...prev, brandLogo: null, previewBrandLogo: null }));
-        } else if (field === "coverImage") {
-            setForm((prev) => ({ ...prev, coverImage: null, previewCoverImage: null }));
         }
     };
 
@@ -112,7 +105,6 @@ const CreateBrands = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }
         fd.append("status", String(form.status));
 
         if (form.brandLogo) fd.append("brandLogo", form.brandLogo);
-        if (form.coverImage) fd.append("coverImage", form.coverImage);
 
         if (upDateData) {
             dispatch(updateBrand({ slug: upDateData.slug, formData: fd }));
@@ -180,47 +172,6 @@ const CreateBrands = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }
                                 <button
                                     type="button"
                                     onClick={() => removePreview("brandLogo")}
-                                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-                                >
-                                    <X className="w-3 h-3" />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-                <div className="space-y-3">
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                        <Upload className="w-4 h-4" />
-                        Cover Image
-                    </label>
-
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-2 text-center transition-all duration-200 hover:border-blue-400 hover:bg-blue-50">
-                        <input
-                            id="cover-image-upload"
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleFileChange(e, "coverImage")}
-                            className="hidden"
-                        />
-                        <label htmlFor="cover-image-upload" className="cursor-pointer flex flex-col items-center justify-center">
-                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
-                                <Upload className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <p className="text-sm text-gray-600 font-medium">Click to upload cover image</p>
-                            <p className="text-xs text-gray-500 mt-1">PNG, JPG, JPEG — recommended landscape</p>
-                        </label>
-                    </div>
-                    {form?.previewCoverImage && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
-                            <div className="relative group">
-                                <Image
-                                    src={form?.previewCoverImage}
-                                    alt="cover-image"
-                                    className="w-full h-24 object-cover rounded-lg border-2 border-gray-200 group-hover:border-blue-400 transition-all duration-200"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => removePreview("coverImage")}
                                     className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
                                 >
                                     <X className="w-3 h-3" />
