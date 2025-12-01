@@ -77,7 +77,7 @@ const SubcategoriesSection = () => {
                             <span className="text-xs text-pink-300 ">{sub?.category?.name}</span>
                             <div className="flex justify-between items-start">
                                 <h1 className="text-md font-semibold capitalize text-gray-800 tracking-wide">
-                                    {sub?.name}
+                                    {sub?.name.length > 90 ? sub?.name.substring(0, 90) + "…" : sub?.name}
                                 </h1>
                                 <div className="flex gap-2">
                                     <button

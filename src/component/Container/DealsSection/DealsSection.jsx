@@ -113,7 +113,6 @@ const DealsSection = () => {
                                     </div>
                                 </div>
                             </div>
-
                             <p className="text-gray-600 text-sm my-2">
                                 {deal?.description}
                             </p>
@@ -129,7 +128,6 @@ const DealsSection = () => {
                                     ))}
                                 </div>
                             )}
-
                             <div className="flex items-center justify-between border-t border-gray-100 mt-3 pt-2">
                                 <span className="text-gray-500 font-medium text-sm">Status:</span>
                                 <span
@@ -144,7 +142,6 @@ const DealsSection = () => {
                         </div>
                     ))}
                 </div>
-
                 {allDeals?.length === 0 && (
                     <div className="text-center py-12">
                         <p className="text-gray-500 text-lg">

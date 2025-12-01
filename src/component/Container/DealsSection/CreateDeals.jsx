@@ -206,7 +206,7 @@ const CreateDeals = ({ isModalOpen, setIsModalOpen, updateData, setUpdateData })
                     </label>
                     <select
                         name="product"
-                        className="border"
+                        className="border border-gray-300 focus:outline-none focus:ring-1 focus:ring-pink-400 focus:border-pink-400 transition p-2"
                         value={form.product}
                         onChange={handleChange}
                         disabled={!allProducts || allProducts.length === 0}
