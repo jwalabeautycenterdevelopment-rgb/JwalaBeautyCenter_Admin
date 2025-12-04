@@ -5,7 +5,7 @@ import {
     AiOutlineDashboard,
     AiOutlineSetting
 } from "react-icons/ai";
-import { MdAddPhotoAlternate, MdPersonSearch } from "react-icons/md";
+import { MdAddPhotoAlternate, MdOutlineProductionQuantityLimits, MdPersonSearch } from "react-icons/md";
 import {
     LuFolder,
     LuFolders,
@@ -21,8 +21,6 @@ import { FaGift } from "react-icons/fa";
 
 const Sidebar = () => {
     const [openCatalog, setOpenCatalog] = useState(true);
-    const [openType, setOpenType] = useState(false);
-
     return (
         <aside className="h-screen bg-white shadow-md flex flex-col border-r border-gray-300">
             <div className="flex items-center h-16 border-b border-gray-200 px-4">
@@ -154,14 +152,14 @@ const Sidebar = () => {
                         Profile
                     </NavLink>
                     <NavLink
-                        to="/deals"
+                        to="/order"
                         className={({ isActive }) =>
                             `flex items-center gap-3 px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-200 
                             ${isActive ? "bg-[#dfabb3] text-white" : ""}`
                         }
                     >
-                        <MdPersonSearch className="text-xl" />
-                        Deals
+                        <MdOutlineProductionQuantityLimits className="text-xl" />
+                        Order
                     </NavLink>
                     <NavLink
                         to="/offers"

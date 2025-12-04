@@ -10,6 +10,7 @@ import authmeReducer from "./slice/authme";
 import productReducer from "./slice/productSlice";
 import dealsReducer from "./slice/dealsSlice";
 import typeReducer from "./slice/typeSlice";
+import orderReducer from "./slice/OrderSlice";
 const reducer = combineReducers({
   login: loginReducer,
   parentCategory: parentCategoryReducer,
@@ -22,5 +23,6 @@ const reducer = combineReducers({
   product: productReducer,
   deals: dealsReducer,
   type: typeReducer,
+  order: orderReducer,
 });
 export default reducer;

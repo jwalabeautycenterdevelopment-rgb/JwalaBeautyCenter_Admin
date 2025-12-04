@@ -16,6 +16,7 @@ import Profile from './pages/Profile/Profile';
 import Deals from './pages/Deals/Deals';
 import Type from './pages/Type/Type';
 import TypeName from './pages/TypeName/TypeName';
+import Order from './pages/Order/Order';
 
 function App() {
   return (
@@ -45,6 +46,7 @@ function App() {
           <Route path="/products" element={<Products />} />
           <Route path="/type" element={<Type />} />
           <Route path="/typename" element={<TypeName />} />
+          <Route path="/order" element={<Order />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -261,7 +261,6 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
             stock: variantInput.stock || "",
             variantImage: [...variantInput.variantImage],
         };
-
         setForm(prev => ({
             ...prev,
             variants: [...prev.variants, newVariant]
@@ -303,9 +302,15 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
         const formDataToSubmit = new FormData();
         formDataToSubmit.append("name", form.name || "");
         formDataToSubmit.append("description", form.description || "");
-        formDataToSubmit.append("price", form.price || "");
+        formDataToSubmit.append(
+            "price",
+            isShowVariant ? 0 : (form.price || "")
+        );
         formDataToSubmit.append("slug", form.slug || "");
-        formDataToSubmit.append("offerPrice", form.offerPrice || "");
+        formDataToSubmit.append(
+            "offerPrice",
+            isShowVariant ? 0 : (form.offerPrice || "")
+        );
         formDataToSubmit.append("stock", form.stock || "");
         formDataToSubmit.append("category", form.category || "");
         formDataToSubmit.append("brand", form.brand || "");
