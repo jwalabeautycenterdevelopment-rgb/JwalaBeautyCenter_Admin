@@ -12,17 +12,26 @@ import {
     updateOffer,
     getOffers,
     clearOfferMessage,
-    clearOfferError
+    clearOfferError,
 } from "../../../store/slice/offersSlice";
+import { getProducts } from "../../../store/slice/productSlice";
+import MultiSelectDropdown from "../../../common/MultiSelectDropdown";
 
 const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) => {
     const dispatch = useDispatch();
-    const { loadingCreate, createOfferSuccessmsg, createOfferErrorsmsg } =
-        useSelector((state) => state.offers);
+    const { loadingCreate, createOfferSuccessmsg, createOfferErrorsmsg } = useSelector(
+        (state) => state.offers
+    );
+    const { allProducts } = useSelector((state) => state.product);
+
+    useEffect(() => {
+        dispatch(getProducts());
+    }, [dispatch]);
 
     const [form, setForm] = useState({
         title: "",
         description: "",
+        products: [],
         percentage: "",
         startDate: "",
         endDate: "",
@@ -31,41 +40,31 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
         previewImages: [],
     });
 
+    // Populate form when updating
     useEffect(() => {
-        if (upDateData) {
-            console.log(upDateData);
+        if (upDateData && allProducts.length) {
+            // Use actual product IDs for MultiSelectDropdown
+            const selectedProductIds = upDateData.products?.map((p) => p.product) || [];
 
             setForm({
                 title: upDateData?.title || "",
                 description: upDateData?.description || "",
                 percentage: upDateData?.percentage || "",
+                products: selectedProductIds, // array of IDs
                 startDate: upDateData?.startDate?.slice(0, 10) || "",
                 endDate: upDateData?.endDate?.slice(0, 10) || "",
                 status: upDateData?.status || 1,
-                offerImages: [],
-                previewImages: upDateData?.offerPhoto || [],
+                offerImages: [], // new uploads
+                previewImages: upDateData?.offerPhoto || [], // existing images
             });
         } else resetForm();
-    }, [upDateData]);
-
-    useEffect(() => {
-        if (createOfferSuccessmsg) {
-            successAlert(createOfferSuccessmsg);
-            dispatch(getOffers());
-            handleClose();
-            dispatch(clearOfferMessage());
-        }
-
-        if (createOfferErrorsmsg) {
-            errorAlert(createOfferErrorsmsg);
-            dispatch(clearOfferError());
-        }
-    }, [createOfferSuccessmsg, createOfferErrorsmsg, dispatch]);
+    }, [upDateData, allProducts]);
 
     const resetForm = () => {
         setForm({
             title: "",
             description: "",
+            products: [],
             percentage: "",
             startDate: "",
             endDate: "",
@@ -86,6 +85,13 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleProductsChange = (selectedIds) => {
+        setForm((prev) => ({
+            ...prev,
+            products: selectedIds,
+        }));
+    };
+
     const handleStatusToggle = () => {
         setForm((prev) => ({
             ...prev,
@@ -95,7 +101,7 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
 
     const handleImageUpload = (e) => {
         const files = Array.from(e.target.files || []);
-        if (files.length === 0) return;
+        if (!files.length) return;
 
         const previews = files.map((file) => URL.createObjectURL(file));
 
@@ -108,13 +114,13 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
 
     const removeImage = (index) => {
         setForm((prev) => {
-            const newImages = [...prev.offerImages];
-            const newPreview = [...prev.previewImages];
+            const imgArr = [...prev.offerImages];
+            const prevArr = [...prev.previewImages];
 
-            newImages.splice(index, 1);
-            newPreview.splice(index, 1);
+            imgArr.splice(index, 1);
+            prevArr.splice(index, 1);
 
-            return { ...prev, offerImages: newImages, previewImages: newPreview };
+            return { ...prev, offerImages: imgArr, previewImages: prevArr };
         });
     };
 
@@ -134,6 +140,10 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
         fd.append("endDate", form.endDate);
         fd.append("status", form.status);
 
+        // Backend expects array of objects { product: "id" }
+        const productsArray = form.products.map((id) => ({ product: id }));
+        fd.append("products", JSON.stringify(productsArray));
+
         form.offerImages.forEach((img) => fd.append("offerPhoto", img));
 
         if (upDateData) {
@@ -143,17 +153,27 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
         }
     };
 
+    useEffect(() => {
+        if (createOfferSuccessmsg) {
+            successAlert(createOfferSuccessmsg);
+            dispatch(getOffers());
+            handleClose();
+            dispatch(clearOfferMessage());
+        }
+
+        if (createOfferErrorsmsg) {
+            errorAlert(createOfferErrorsmsg);
+            dispatch(clearOfferError());
+        }
+    }, [createOfferSuccessmsg, createOfferErrorsmsg, dispatch]);
+
     return (
         <CommonPopup
             isOpen={isModalOpen}
             onClose={handleClose}
             title={upDateData ? "Update Offer" : "Create Offer"}
         >
-            <form
-                onSubmit={handleSubmit}
-                className="flex flex-col gap-4"
-                encType="multipart/form-data"
-            >
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4" encType="multipart/form-data">
                 <InputField
                     type="text"
                     name="title"
@@ -161,20 +181,24 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
                     value={form.title}
                     onChange={handleChange}
                 />
-
                 <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        Description
-                    </label>
+                    <label className="text-sm text-gray-700">Description</label>
                     <textarea
                         name="description"
                         rows={3}
                         value={form.description}
                         onChange={handleChange}
-                        className="w-full border border-gray-300 rounded-md p-2"
+                        className="w-full border p-2 rounded-md"
                     />
                 </div>
-
+                <MultiSelectDropdown
+                    label="Select Products"
+                    options={allProducts || []}
+                    selected={form.products} // now array of IDs
+                    multiple={true}
+                    onChange={handleProductsChange}
+                    searchable={true}
+                />
                 <InputField
                     type="number"
                     name="percentage"
@@ -182,29 +206,15 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
                     value={form.percentage}
                     onChange={handleChange}
                 />
-
                 <div className="grid grid-cols-2 gap-4">
-                    <InputField
-                        type="date"
-                        name="startDate"
-                        value={form.startDate}
-                        onChange={handleChange}
-                    />
-                    <InputField
-                        type="date"
-                        name="endDate"
-                        value={form.endDate}
-                        onChange={handleChange}
-                    />
+                    <InputField type="date" name="startDate" value={form.startDate} onChange={handleChange} />
+                    <InputField type="date" name="endDate" value={form.endDate} onChange={handleChange} />
                 </div>
-
                 <div className="space-y-3">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                        <Upload className="w-4 h-4" />
-                        Offer Images (Max 5)
+                        <Upload className="w-4 h-4" /> Offer Images (Max 5)
                     </label>
-
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center">
+                    <div className="border-2 border-dashed p-4 rounded-xl text-center">
                         <input
                             id="offer-img-upload"
                             type="file"
@@ -213,27 +223,18 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
                             className="hidden"
                             onChange={handleImageUpload}
                         />
-
-                        <label
-                            htmlFor="offer-img-upload"
-                            className="cursor-pointer flex flex-col items-center"
-                        >
-                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+                        <label htmlFor="offer-img-upload" className="cursor-pointer">
+                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-2">
                                 <Upload className="w-6 h-6 text-blue-600" />
                             </div>
-                            <p className="text-sm">Click to upload images</p>
+                            Click to upload images
                         </label>
                     </div>
-
-                    {form?.previewImages?.length > 0 && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-3">
-                            {form?.previewImages?.map((img, index) => (
-                                <div key={index} className="relative group">
-                                    <Image
-                                        src={img}
-                                        alt="offer-img"
-                                        className="w-full h-24 object-cover rounded-lg border"
-                                    />
+                    {form.previewImages.length > 0 && (
+                        <div className="grid grid-cols-3 gap-3">
+                            {form.previewImages.map((img, index) => (
+                                <div key={index} className="relative">
+                                    <Image src={img} className="w-full h-24 object-cover rounded-lg" />
                                     <button
                                         type="button"
                                         onClick={() => removeImage(index)}
@@ -246,7 +247,6 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
                         </div>
                     )}
                 </div>
-
                 <div className="flex items-center gap-4">
                     <span>Status:</span>
                     <div
@@ -255,21 +255,16 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
                             }`}
                     >
                         <div
-                            className={`bg-white rounded-full w-5 h-5 transform transition-all ${form.status === 0 ? "translate-x-7" : "translate-x-0"
+                            className={`bg-white rounded-full w-5 h-5 transform transition-all ${form.status === 1 ? "translate-x-7" : "translate-x-0"
                                 }`}
                         />
                     </div>
                 </div>
-
                 <div className="flex justify-end gap-2">
                     <Button type="submit" loading={loadingCreate}>
                         {upDateData ? "Update" : "Create"}
                     </Button>
-                    <Button
-                        type="button"
-                        className="bg-gray-200 text-black"
-                        onClick={handleClose}
-                    >
+                    <Button type="button" className="bg-gray-200" onClick={handleClose}>
                         Cancel
                     </Button>
                 </div>

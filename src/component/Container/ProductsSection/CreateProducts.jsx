@@ -10,6 +10,7 @@ import { getTypeNamesByTypeId, getTypes, createTypeName } from "../../../store/s
 import { HexColorPicker } from "react-colorful";
 import { getColorName } from "../../../utils/getColorName";
 import { slugify } from "../../../utils/slugify";
+import SingleSelectDropdown from "../../../common/SingleSelectDropdown";
 
 const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const dispatch = useDispatch();
@@ -418,11 +419,13 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-1">Category *</label>
-                        <select name="category" value={form?.category} onChange={handleChange} required className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300">
-                            <option value="">Select Category</option>
-                            {allSubCategories?.map(cat => <option key={cat?._id} value={cat?._id}>{cat?.name}</option>)}
-                        </select>
+                        <SingleSelectDropdown
+                            label="Category *"
+                            options={allSubCategories}
+                            value={form.category}
+                            onChange={(val) => setForm({ ...form, category: val })}
+                            searchable={true}
+                        />
                     </div>
                 </div>
                 <div>
