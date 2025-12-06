@@ -183,8 +183,6 @@ const ProductsSection = () => {
                                     <FaBox className="text-4xl text-gray-400" />
                                 </div>
                             )}
-
-                            {/* Badges */}
                             <div className="absolute top-2 left-2 flex flex-col gap-1">
                                 {product?.isBestSeller && (
                                     <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
@@ -197,8 +195,6 @@ const ProductsSection = () => {
                                     </span>
                                 )}
                             </div>
-
-                            {/* Action buttons */}
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-2">
                                 <button
                                     onClick={() => handleView(product)}
@@ -229,13 +225,13 @@ const ProductsSection = () => {
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                     <span className="text-lg font-bold text-gray-900">
-                                        {formatPrice(product?.price)}
+                                        {formatPrice(product?.price || product?.variants?.[0]?.price)}
                                     </span>
 
                                     {product?.discountPrice &&
                                         product?.discountPrice < product?.price && (
                                             <span className="text-sm text-gray-500 line-through">
-                                                {formatPrice(product?.discountPrice)}
+                                                {formatPrice(product?.discountPrice || product?.variants?.[0]?.discountPrice)}
                                             </span>
                                         )}
                                 </div>
@@ -334,11 +330,11 @@ const ProductsSection = () => {
 
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-bold text-gray-900">
-                                            {formatPrice(product?.price)}
+                                            {formatPrice(product?.price    || product?.variants?.[0]?.price)}
                                         </div>
                                         {product?.discountPrice && (
                                             <div className="text-sm text-gray-500 line-through">
-                                                {formatPrice(product?.discountPrice)}
+                                                {formatPrice(product?.discountPrice || product?.variants?.[0]?.discountPrice)}
                                             </div>
                                         )}
                                     </td>
