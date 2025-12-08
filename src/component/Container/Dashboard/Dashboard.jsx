@@ -8,7 +8,8 @@ import {
     Package,
     AlertTriangle,
     MoreHorizontal,
-    TrendingUpDown
+    TrendingUpDown,
+    IndianRupee
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAdminDashboard } from "../../../store/slice/dashboardSlice";
@@ -34,7 +35,7 @@ export default function Dashboard() {
             title: "Revenue",
             value: `₹${dashboardData?.totals?.totalRevenue?.toString() || "0"}`,
             hint: "Total revenue generated",
-            icon: DollarSign,
+            icon: IndianRupee,
             color: "bg-green-50 text-green-600",
         },
         {
@@ -213,7 +214,7 @@ export default function Dashboard() {
                                 </div>
 
                                 <div className="text-right">
-                                    <p className="font-semibold">${order.totalAmount}</p>
+                                    <p className="font-semibold">₹{order.totalAmount}</p>
                                     <p className="text-sm text-slate-500">
                                         {formatDate(order.placedAt || order.createdAt)}
                                     </p>
@@ -245,7 +246,6 @@ export default function Dashboard() {
                             Welcome back! Here's your store overview 👋
                         </p>
                     </div>
-
                     <div className="flex items-center gap-3">
                         <Button className="px-4 py-2.5 border border-slate-200 rounded-lg text-slate-700">
                             <TrendingUpDown className="w-4 h-4" /> View Reports

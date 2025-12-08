@@ -25,6 +25,9 @@ export function StatCard({ title, value, hint, icon: Icon, color }) {
                 </div>
 
                 <div className={`p-3 rounded-xl ${color}`}>
+                    {
+                        
+                    }
                     <Icon className="w-4 h-4" />
                 </div>
             </div>
