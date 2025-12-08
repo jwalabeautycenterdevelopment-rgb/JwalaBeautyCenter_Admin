@@ -11,6 +11,7 @@ import productReducer from "./slice/productSlice";
 import dealsReducer from "./slice/dealsSlice";
 import typeReducer from "./slice/typeSlice";
 import orderReducer from "./slice/OrderSlice";
+import usersReducer from "./slice/usersSlice";
 import dashboardReducer from "./slice/dashboardSlice";
 const reducer = combineReducers({
   login: loginReducer,
@@ -25,6 +26,7 @@ const reducer = combineReducers({
   deals: dealsReducer,
   type: typeReducer,
   order: orderReducer,
+  users: usersReducer,
   adminDashboard: dashboardReducer,
 });
 export default reducer;

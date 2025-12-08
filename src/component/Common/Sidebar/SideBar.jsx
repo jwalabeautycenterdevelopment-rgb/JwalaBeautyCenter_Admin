@@ -17,7 +17,7 @@ import {
 
 import logo from "../../../assets/navbar_icon.svg";
 import { GiKnightBanner } from "react-icons/gi";
-import { FaGift } from "react-icons/fa";
+import { FaGift, FaUserCheck } from "react-icons/fa";
 
 const Sidebar = () => {
     const [openCatalog, setOpenCatalog] = useState(true);
@@ -181,7 +181,16 @@ const Sidebar = () => {
                         <LuTag className="text-xl" />
                         Brands
                     </NavLink>
-
+                    <NavLink
+                        to="/users"
+                        className={({ isActive }) =>
+                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-200 
+                            ${isActive ? "bg-[#dfabb3] text-white" : ""}`
+                        }
+                    >
+                        <FaUserCheck className="text-xl" />
+                        Users
+                    </NavLink>
                 </nav>
             </div>
         </aside>

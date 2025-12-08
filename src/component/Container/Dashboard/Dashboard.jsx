@@ -32,7 +32,7 @@ export default function Dashboard() {
         },
         {
             title: "Revenue",
-            value: `$${dashboardData?.totals?.totalRevenue?.toString() || "0"}`,
+            value: `₹${dashboardData?.totals?.totalRevenue?.toString() || "0"}`,
             hint: "Total revenue generated",
             icon: DollarSign,
             color: "bg-green-50 text-green-600",
