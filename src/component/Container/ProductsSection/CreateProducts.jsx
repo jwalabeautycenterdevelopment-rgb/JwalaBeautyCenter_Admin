@@ -18,6 +18,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const { allBrands } = useSelector((state) => state.brands);
     const { types, typeNamesById } = useSelector((state) => state.type);
     const [isShowVariant, setIsShowVariant] = useState(false);
+    const today = new Date().toISOString().split("T")[0];
 
     const [variantInput, setVariantInput] = useState({
         variantName: "",
@@ -260,6 +261,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
             price: variantInput.price,
             offerPrice: variantInput.offerPrice || "",
             stock: variantInput.stock || "",
+            weight: variantInput.weight || "",
             variantImage: [...variantInput.variantImage],
         };
         setForm(prev => ({
@@ -285,7 +287,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const handleVariantChange = (index, field, value) => {
         setForm(prev => ({
             ...prev,
-            variants: prev.variants.map((v, i) => (i === index ? { ...v, [field]: value } : v)),
+            variants: prev.variants?.map((v, i) => (i === index ? { ...v, [field]: value } : v)),
         }));
     };
 
@@ -466,11 +468,25 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium mb-1">Manufacturing Date</label>
-                        <input type="date" name="manufacturingDate" value={form?.manufacturingDate} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                        <input
+                            type="date"
+                            name="manufacturingDate"
+                            value={form?.manufacturingDate}
+                            onChange={handleChange}
+                            min={today}
+                            className="w-full p-3 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                        />
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">Expiry Date</label>
-                        <input type="date" name="expiryDate" value={form?.expiryDate} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                        <input
+                            type="date"
+                            name="expiryDate"
+                            value={form?.expiryDate}
+                            onChange={handleChange}
+                            min={today}
+                            className="w-full p-3 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                        />
                     </div>
                 </div>
                 <div>
@@ -510,10 +526,10 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                                     <span className="text-lg font-bold text-pink-700">{variant?.name || "Variant"}</span>
                                 </div>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                    <input type="text" placeholder="Weight" value={variant?.weight} onChange={e => handleVariantChange(index, "weight", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                                     <input type="number" placeholder="Price *" value={variant?.price} onChange={e => handleVariantChange(index, "price", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                                     <input type="number" placeholder="Discount Price" value={variant?.offerPrice} onChange={e => handleVariantChange(index, "offerPrice", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                                     <input type="number" placeholder="Stock" value={variant?.stock} onChange={e => handleVariantChange(index, "stock", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                                    <input type="text" placeholder="Weight" value={variant?.weight} onChange={e => handleVariantChange(index, "weight", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                                 </div>
                                 <ImageUploadBox images={variant?.variantImage || []} onChange={e => handleExistingVariantImageChange(e, index)} onRemove={i => handleRemoveExistingVariantImage(index, i)} label={`Variant Images - ${variant.name || "Variant"} (Max 5)`} />
                             </div>
@@ -653,10 +669,10 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                                 </div>
                             )}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                <input type="text" placeholder="Weight" value={variantInput?.weight} onChange={e => setVariantInput(p => ({ ...p, weight: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
                                 <input type="number" placeholder="Price *" value={variantInput?.price} onChange={e => setVariantInput(p => ({ ...p, price: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
                                 <input type="number" placeholder="Discount Price" value={variantInput?.offerPrice} onChange={e => setVariantInput(p => ({ ...p, offerPrice: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
                                 <input type="number" placeholder="Stock" value={variantInput?.stock} onChange={e => setVariantInput(p => ({ ...p, stock: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
-                                <input type="text" placeholder="Weight" value={variantInput?.weight} onChange={e => setVariantInput(p => ({ ...p, weight: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
                             </div>
                             <ImageUploadBox images={variantInput?.variantImage} onChange={handleVariantInputImageChange} onRemove={handleRemoveVariantInputImage} label="Variant Images (Optional)" />
                             <button type="button" onClick={handleAddVariant} className="w-full mt-8 py-4 bg-pink-600 text-white text-lg font-bold rounded-xl hover:bg-pink-700 transition">

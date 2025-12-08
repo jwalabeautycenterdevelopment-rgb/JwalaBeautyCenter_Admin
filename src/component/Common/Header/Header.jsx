@@ -45,6 +45,7 @@ const Header = () => {
             transition: { duration: 0.3, ease: "easeOut" },
         },
     };
+
     return (
         <header className="w-full h-16 bg-white shadow flex items-center justify-end md:justify-between px-6 border-b border-gray-200 sticky top-0 z-20">
             <motion.div

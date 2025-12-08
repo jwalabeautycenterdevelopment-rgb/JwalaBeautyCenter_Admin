@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, TrendingUpDown } from "lucide-react";
+import {  TrendingUpDown } from "lucide-react";
 
 export function Card({ children, className = "" }) {
     return (
