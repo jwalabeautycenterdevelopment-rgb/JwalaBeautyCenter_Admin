@@ -1,7 +1,7 @@
 import { memo, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { IoMdArrowRoundBack } from "react-icons/io";
-import { FaUpload, FaTimes, FaPlus } from "react-icons/fa";
+import { FaUpload, FaTimes } from "react-icons/fa";
 import { getSubCategory } from "../../../store/slice/subCategorySlice";
 import { getBrands } from "../../../store/slice/brandsSlice";
 import Image from "../../../common/Image";
@@ -11,6 +11,7 @@ import { HexColorPicker } from "react-colorful";
 import { getColorName } from "../../../utils/getColorName";
 import { slugify } from "../../../utils/slugify";
 import SingleSelectDropdown from "../../../common/SingleSelectDropdown";
+import { getPricePayload } from "../../../utils/getPricePercentage";
 
 const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const dispatch = useDispatch();
@@ -18,7 +19,6 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const { allBrands } = useSelector((state) => state.brands);
     const { types, typeNamesById } = useSelector((state) => state.type);
     const [isShowVariant, setIsShowVariant] = useState(false);
-    const today = new Date().toISOString().split("T")[0];
 
     const [variantInput, setVariantInput] = useState({
         variantName: "",
@@ -38,9 +38,9 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const [keywordInput, setKeywordInput] = useState("");
 
     const [form, setForm] = useState({
-        name: "", description: "", price: "", offerPrice: "", stock: "", category: "", brand: "",
+        name: "", description: "", price: "", offerPrice: "", weight: "", stock: "", category: "", brand: "",
         tags: [], images: [], isBestSeller: false, isNewArrival: false,
-        manufacturingDate: "", expiryDate: "", variants: [], metaTitle: "", metaDescription: "",
+        variants: [], metaTitle: "", metaDescription: "",
         keywords: [],
         canonicalTag: "",
         slug: "",
@@ -70,12 +70,11 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                 category: formData?.category?._id || "",
                 brand: formData?.brand?._id || "",
                 slug: formData?.slug || "",
+                weight: formData?.weight || "",
                 tags: Array.isArray(formData?.tags) ? formData.tags : [],
                 images: Array.isArray(formData?.productImages) ? formData.productImages : [],
                 isBestSeller: !!formData?.isBestSeller,
                 isNewArrival: !!formData?.isNewArrival,
-                manufacturingDate: formData?.manufacturingDate?.slice(0, 10) || "",
-                expiryDate: formData?.expiryDate?.slice(0, 10) || "",
                 variants: Array.isArray(formData?.variants)
                     ? formData.variants.map((v) => ({
                         variantId: v?._id || "",
@@ -299,9 +298,14 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
         setForm(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }));
     };
 
+
+
     const handleSubmit = (e) => {
         e.preventDefault();
-
+        const { offerPercentage } = getPricePayload(
+            Number(form.price) || 0,
+            Number(form.offerPrice) || 0
+        );
         const formDataToSubmit = new FormData();
         formDataToSubmit.append("name", form.name || "");
         formDataToSubmit.append("description", form.description || "");
@@ -314,13 +318,13 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
             "offerPrice",
             isShowVariant ? 0 : (form.offerPrice || "")
         );
+        formDataToSubmit.append("discount", offerPercentage);
         formDataToSubmit.append("stock", form.stock || "");
+        formDataToSubmit.append("weight", form.weight || "");
         formDataToSubmit.append("category", form.category || "");
         formDataToSubmit.append("brand", form.brand || "");
         formDataToSubmit.append("isBestSeller", !!form.isBestSeller);
         formDataToSubmit.append("isNewArrival", !!form.isNewArrival);
-        formDataToSubmit.append("manufacturingDate", form.manufacturingDate || "");
-        formDataToSubmit.append("expiryDate", form.expiryDate || "");
         formDataToSubmit.append("metaTitle", form.metaTitle || "");
         formDataToSubmit.append("metaDescription", form.metaDescription || "");
         formDataToSubmit.append("canonicalTag", form.canonicalTag || "");
@@ -343,6 +347,10 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
         });
 
         (form.variants || []).forEach((variant, i) => {
+            const { offerPercentage: variantDiscount } = getPricePayload(
+                Number(variant.price) || 0,
+                Number(variant.offerPrice) || 0
+            );
             const existingUrls = [];
             (variant.variantImage || []).forEach(img => {
                 if (img instanceof File) {
@@ -356,6 +364,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
             formDataToSubmit.append(`variants[${i}][type]`, variant.name || "");
             formDataToSubmit.append(`variants[${i}][price]`, variant.price || "");
             formDataToSubmit.append(`variants[${i}][offerPrice]`, variant.offerPrice || "");
+            formDataToSubmit.append(`variants[${i}][discount]`, variantDiscount);
             formDataToSubmit.append(`variants[${i}][stock]`, variant.stock || "");
             formDataToSubmit.append(`variants[${i}][weight]`, variant.weight || "");
         });
@@ -442,7 +451,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         placeholder="Slug"
                     />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label className="block text-sm font-medium mb-1">Price </label>
                         <input type="number" name="price" value={form?.price} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
@@ -450,6 +459,10 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                     <div>
                         <label className="block text-sm font-medium mb-1">Discount Price</label>
                         <input type="number" name="offerPrice" value={form?.offerPrice} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Weight</label>
+                        <input type="text" name="weight" value={form?.weight} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -463,30 +476,6 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                     <div>
                         <label className="block text-sm font-medium mb-1">Stock</label>
                         <input type="number" name="stock" value={form?.stock} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Manufacturing Date</label>
-                        <input
-                            type="date"
-                            name="manufacturingDate"
-                            value={form?.manufacturingDate}
-                            onChange={handleChange}
-                            min={today}
-                            className="w-full p-3 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Expiry Date</label>
-                        <input
-                            type="date"
-                            name="expiryDate"
-                            value={form?.expiryDate}
-                            onChange={handleChange}
-                            min={today}
-                            className="w-full p-3 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
-                        />
                     </div>
                 </div>
                 <div>

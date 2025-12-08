@@ -4,9 +4,8 @@ import CommonPopup from "../../../common/CommonPopup";
 import InputField from "../../../common/CommonInput";
 import Button from "../../../common/Button";
 import { errorAlert, successAlert, warningAlert } from "../../../utils/alertService";
-import { createBanner, getBanner, updateBanner } from "../../../store/slice/bannerSlice";
+import { clearCreateMsg, createBanner, getBanner, updateBanner } from "../../../store/slice/bannerSlice";
 import Image from "../../../common/Image";
-import { formatDate } from "../../../utils/formatDate";
 
 const AddBanner = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) => {
     const dispatch = useDispatch();
@@ -14,10 +13,7 @@ const AddBanner = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) =
 
     const [formData, setFormData] = useState({
         header: "",
-        description: "",
-        startDate: "",
-        endDate: "",
-        priority: 1,
+        colourCode: "#ffffff",
         bannerImage: [],
         imagePreview: [],
         isActive: true,
@@ -26,10 +22,7 @@ const AddBanner = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) =
         if (upDateData) {
             setFormData({
                 header: upDateData.header || "",
-                description: upDateData.description || "",
-                startDate: formatDate(upDateData.startDate),
-                endDate: formatDate(upDateData.endDate),
-                priority: upDateData.priority || 1,
+                colourCode: upDateData.colourCode || "#ffffff",
                 bannerImage: [],
                 imagePreview: upDateData?.bannerImage
                     ? Array.isArray(upDateData.bannerImage)
@@ -41,10 +34,7 @@ const AddBanner = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) =
         } else {
             setFormData({
                 header: "",
-                description: "",
-                startDate: "",
-                endDate: "",
-                priority: 1,
+                colourCode: "#ffffff",
                 bannerImage: [],
                 imagePreview: [],
                 isActive: true,
@@ -53,17 +43,16 @@ const AddBanner = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) =
     }, [upDateData]);
 
 
+
     useEffect(() => {
         if (createSuccessMsg) {
             successAlert(createSuccessMsg);
+            dispatch(clearCreateMsg())
             setIsModalOpen(false);
             dispatch(getBanner());
             setFormData({
                 header: "",
-                description: "",
-                startDate: "",
-                endDate: "",
-                priority: 1,
+                colourCode: "",
                 bannerImage: [],
                 imagePreview: [],
                 isActive: true,
@@ -72,6 +61,7 @@ const AddBanner = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) =
         }
         if (createErrorMsg) {
             errorAlert(createErrorMsg);
+            dispatch(clearCreateMsg())
         }
     }, [createSuccessMsg, createErrorMsg]);
 
@@ -103,15 +93,10 @@ const AddBanner = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) =
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!formData.startDate || !formData.endDate) return warningAlert("Start and End dates are required");
-
         const dataToSend = new FormData();
         dataToSend.append("header", formData.header);
-        dataToSend.append("description", formData.description);
-        dataToSend.append("startDate", formData.startDate);
-        dataToSend.append("endDate", formData.endDate);
-        dataToSend.append("priority", formData.priority);
         dataToSend.append("isActive", formData.isActive);
+        dataToSend.append("colourCode", formData.colourCode);
         formData.bannerImage.forEach((file) => dataToSend.append("bannerImage", file));
         if (upDateData) {
             dispatch(updateBanner({ id: upDateData._id, formData: dataToSend }));
@@ -124,10 +109,7 @@ const AddBanner = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) =
         setIsModalOpen(false);
         setFormData({
             header: "",
-            description: "",
-            startDate: "",
-            endDate: "",
-            priority: 1,
+            colourCode: "",
             bannerImage: [],
             imagePreview: [],
             isActive: true,
@@ -139,26 +121,31 @@ const AddBanner = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) =
         <CommonPopup isOpen={isModalOpen} onClose={handleClose} title={upDateData ? "Update Banner" : "Add Banner"}>
             <form onSubmit={handleSubmit} encType="multipart/form-data" className="flex flex-col gap-2">
                 <InputField type="text" name="header" placeholder="Enter banner header" value={formData.header} onChange={handleChange} />
-
                 <div className="flex flex-col">
                     <label className="font-medium text-xs text-gray-700 mb-1">Description</label>
-                    <textarea
-                        name="description"
-                        placeholder="Enter banner description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        rows={3}
-                        className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:ring-1 focus:ring-pink-400 focus:border-pink-400 transition"
-                    />
+                    <div className="mt-2">
+                        <label className="font-medium text-xs text-gray-700 mb-1 block">Pick Banner Color</label>
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="color"
+                                name="colorCode"
+                                value={formData.colourCode || "#ffffff"}
+                                onChange={handleChange}
+                                className="w-10 h-10 cursor-pointer rounded border"
+                            />
+                            <input
+                                type="text"
+                                name="colourCode"
+                                placeholder="#FFFFFF"
+                                value={formData.colourCode}
+                                onChange={handleChange}
+                                className="border p-2 rounded w-32 text-sm"
+                            />
+                        </div>
+                    </div>
                 </div>
-
-                <div className="flex justify-between gap-2">
-                    <InputField type="date" name="startDate" value={formData.startDate} onChange={handleChange} required className="text-xs px-2 py-1" />
-                    <InputField type="date" name="endDate" value={formData.endDate} onChange={handleChange} required className="text-xs px-2 py-1 placeholder:text-xs" />
-                </div>
-
-                <div className="flex justify-between items-center gap-4">
-                    <InputField type="number" name="priority" value={formData.priority} onChange={handleChange} min={1} />
+                {
+                    upDateData &&
                     <div className="flex items-center gap-3 mt-6">
                         <span className="font-medium text-xs text-gray-700">Status:</span>
                         <div
@@ -169,8 +156,7 @@ const AddBanner = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData }) =
                         </div>
                         <span className="text-sm">{formData.isActive ? "Active" : "Inactive"}</span>
                     </div>
-                </div>
-
+                }
                 <div className="flex flex-col">
                     <label className="font-medium text-xs text-gray-700 mb-1">Banner Images</label>
                     <input type="file" multiple accept="image/*" onChange={handleImageChange} className="mt-2 p-4 border-2 border-dotted border-gray-300" />
