@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { User, Lock } from "lucide-react";
+import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { clearError, clearMessage, loginAdmin } from "../../../store/slice/login";
@@ -8,6 +8,7 @@ import { errorAlert } from "../../../utils/alertService";
 
 export default function AdminLogin() {
     const dispatch = useDispatch();
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const { loading, error, message } = useSelector((state) => state.login);
 
@@ -74,15 +75,22 @@ export default function AdminLogin() {
                             <Lock
                                 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 pointer-events-none"
                             />
+
                             <input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 name="password"
                                 placeholder="Enter password"
                                 value={form?.password}
                                 onChange={handleChange}
-                                className="w-full py-3 pl-12 pr-4 rounded-xl border border-gray-200 bg-blue-50 text-gray-900 
+                                className="w-full py-3 pl-12 pr-12 rounded-xl border border-gray-200 bg-blue-50 text-gray-900 
                        focus:outline-none focus:ring-2 focus:ring-pink-400 shadow-sm"
                             />
+                            <div
+                                className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-600"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </div>
                         </div>
                     </div>
                     <button
