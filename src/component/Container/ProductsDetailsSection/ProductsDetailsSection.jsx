@@ -1,10 +1,11 @@
 "use client"
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { FaStar } from "react-icons/fa"
+import { FaArrowLeft, FaStar } from "react-icons/fa"
 import { getSingleProduct } from "../../../store/slice/productSlice"
 import Image from "../../../common/Image"
 import { formatPrice } from "../../../utils/formatPrice"
+import { Link } from "react-router-dom"
 const ProductDetails = ({ slug }) => {
     const dispatch = useDispatch()
     const { singleProduct = {} } = useSelector((state) => state.product)
@@ -50,9 +51,14 @@ const ProductDetails = ({ slug }) => {
             <div className="max-w-7xl mx-auto">
                 <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
                     <div className="flex justify-between">
-                        <div className="flex flex-col">
-                            <span className="text-sm text-gray-500">Product ID</span>
-                            <span className="font-mono text-sm font-semibold">{singleProduct?._id || "N/A"}</span>
+                        <div className="flex  items-center gap-1">
+                            <Link to={"/products"} className="text-gray-600 hover:text-gray-800 hover:scale-110 transition-transform">
+                                <FaArrowLeft />
+                            </Link>
+                            <div>
+                                <span className="text-sm text-gray-500">Product ID</span>
+                                <span className="font-mono text-sm font-semibold">{singleProduct?._id || "N/A"}</span>
+                            </div>
                         </div>
                         <div className="flex flex-col">
                             <span className="text-sm text-gray-500">SKU</span>

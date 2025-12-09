@@ -416,7 +416,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                 <h2 className="text-3xl font-bold">{formData ? "Update Product" : "Add New Product"}</h2>
             </div>
             <form onSubmit={handleSubmit} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <label className="block text-sm font-medium mb-1">Product Name *</label>
                         <input
@@ -435,6 +435,15 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                             options={allSubCategories}
                             value={form.category}
                             onChange={(val) => setForm({ ...form, category: val })}
+                            searchable={true}
+                        />
+                    </div>
+                    <div>
+                        <SingleSelectDropdown
+                            label="Brand *"
+                            options={allBrands}
+                            value={form.brand}
+                            onChange={(val) => setForm({ ...form, brand: val })}
                             searchable={true}
                         />
                     </div>
@@ -476,18 +485,14 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                 </div>
                 {
                     !isShowVariant && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Price </label>
+                                <label className="block text-sm font-medium mb-1"> MRP (Price) </label>
                                 <input type="number" name="price" value={form?.price} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1">Discount Price</label>
                                 <input type="number" name="offerPrice" value={form?.offerPrice} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Weight</label>
-                                <input type="text" name="weight" value={form?.weight} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                             </div>
                         </div>
                     )
@@ -495,18 +500,14 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                 {
                     !isShowVariant && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <SingleSelectDropdown
-                                    label="Brand *"
-                                    options={allBrands}
-                                    value={form.brand}
-                                    onChange={(val) => setForm({ ...form, brand: val })}
-                                    searchable={true}
-                                />
-                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium mb-1">Stock</label>
                                 <input type="number" name="stock" value={form?.stock} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Weight</label>
+                                <input type="text" name="weight" value={form?.weight} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                             </div>
                         </div>
                     )
@@ -674,7 +675,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                             )}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                                 <input type="text" placeholder="Weight" value={variantInput?.weight} onChange={e => setVariantInput(p => ({ ...p, weight: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
-                                <input type="number" placeholder="Price *" value={variantInput?.price} onChange={e => setVariantInput(p => ({ ...p, price: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
+                                <input type="number" placeholder="MRP (Price*)" value={variantInput?.price} onChange={e => setVariantInput(p => ({ ...p, price: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
                                 <input type="number" placeholder="Discount Price" value={variantInput?.offerPrice} onChange={e => setVariantInput(p => ({ ...p, offerPrice: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
                                 <input type="number" placeholder="Stock" value={variantInput?.stock} onChange={e => setVariantInput(p => ({ ...p, stock: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
                             </div>
