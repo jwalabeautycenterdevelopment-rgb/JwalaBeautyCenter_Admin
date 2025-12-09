@@ -167,117 +167,118 @@ const ProductsSection = () => {
                 const img = getProductImage(product);
 
                 return (
-                    <Link to={`/products/${product?.slug}`} key={product?._id}>
-                        <div
-                            key={product?._id}
-                            className="group relative bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200"
-                        >
-                            <div className="relative h-48 bg-gray-100 overflow-hidden">
+                    <div
+                        key={product?._id}
+                        className="group relative bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200"
+                    >
+                        <div className="relative h-48 bg-gray-100 overflow-hidden">
 
-                                {img ? (
-                                    <Image
-                                        src={img}
-                                        alt={product?.name}
-                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                                        <FaBox className="text-4xl text-gray-400" />
-                                    </div>
+                            {img ? (
+                                <Image
+                                    src={img}
+                                    alt={product?.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                                    <FaBox className="text-4xl text-gray-400" />
+                                </div>
+                            )}
+                            <div className="absolute top-2 left-2 flex flex-col gap-1">
+                                {product?.isBestSeller && (
+                                    <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                        Best Seller
+                                    </span>
                                 )}
-                                <div className="absolute top-2 left-2 flex flex-col gap-1">
-                                    {product?.isBestSeller && (
-                                        <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                                            Best Seller
-                                        </span>
-                                    )}
-                                    {product?.isNewArrival && (
-                                        <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                                            New Arrival
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-2">
-                                    <button
-                                        onClick={() => handleView(product)}
-                                        className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors shadow-lg"
-                                    >
-                                        <FaEye size={14} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleUpdate(product)}
-                                        className="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors shadow-lg"
-                                    >
-                                        <FaEdit size={14} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteClick(product?._id)}
-                                        className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"
-                                    >
-                                        <FaTrash size={14} />
-                                    </button>
-                                </div>
+                                {product?.isNewArrival && (
+                                    <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                        New Arrival
+                                    </span>
+                                )}
                             </div>
-
-                            <div className="p-4">
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-2">
+                                <button
+                                    onClick={() => handleView(product)}
+                                    className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors shadow-lg"
+                                >
+                                    <FaEye size={14} />
+                                </button>
+                                <button
+                                    onClick={() => handleUpdate(product)}
+                                    className="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors shadow-lg"
+                                >
+                                    <FaEdit size={14} />
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteClick(product?._id)}
+                                    className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                                >
+                                    <FaTrash size={14} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-4">
+                            <Link
+                                className="hover:underline"
+                                to={`/products/${product?.slug}`}
+                            >
                                 <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 h-6">
                                     {product?.name}
                                 </h3>
+                            </Link>
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg font-bold text-gray-900">
+                                        {formatPrice(product?.price || product?.variants?.[0]?.price)}
+                                    </span>
 
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-lg font-bold text-gray-900">
-                                            {formatPrice(product?.price || product?.variants?.[0]?.price)}
-                                        </span>
-
-                                        {product?.discountPrice &&
-                                            product?.discountPrice < product?.price && (
-                                                <span className="text-sm text-gray-500 line-through">
-                                                    {formatPrice(product?.discountPrice || product?.variants?.[0]?.discountPrice)}
-                                                </span>
-                                            )}
-                                    </div>
-                                </div>
-
-                                <div className="text-sm text-gray-600 space-y-1">
-                                    <p>Brand: {product?.brand?.name}</p>
-                                    <p>SKU: {product?.sku || "N/A"}</p>
-                                    <p
-                                        className={`font-medium ${(product?.stock > 0) ||
-                                            (product?.variants?.[0]?.stock > 0)
-                                            ? "text-green-600"
-                                            : "text-red-600"
-                                            }`}
-                                    >
-                                        Stock: {product?.variants?.[0]?.stock || product?.stock}
-                                    </p>
-
-                                    {product?.category && (
-                                        <p>Category: {product?.category?.name}</p>
-                                    )}
-                                </div>
-
-                                {product?.tags && product?.tags.length > 0 && (
-                                    <div className="mt-2 flex flex-wrap gap-1">
-                                        {product?.tags.slice(0, 3).map((tag, i) => (
-                                            <span
-                                                key={i}
-                                                className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
-                                            >
-                                                {tag}
-                                            </span>
-                                        ))}
-
-                                        {product?.tags.length > 3 && (
-                                            <span className="text-xs text-gray-500">
-                                                +{product?.tags.length - 3} more
+                                    {product?.discountPrice &&
+                                        product?.discountPrice < product?.price && (
+                                            <span className="text-sm text-gray-500 line-through">
+                                                {formatPrice(product?.discountPrice || product?.variants?.[0]?.discountPrice)}
                                             </span>
                                         )}
-                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="text-sm text-gray-600 space-y-1">
+                                <p>Brand: {product?.brand?.name}</p>
+                                <p>SKU: {product?.sku || "N/A"}</p>
+                                <p
+                                    className={`font-medium ${(product?.stock > 0) ||
+                                        (product?.variants?.[0]?.stock > 0)
+                                        ? "text-green-600"
+                                        : "text-red-600"
+                                        }`}
+                                >
+                                    Stock: {product?.variants?.[0]?.stock || product?.stock}
+                                </p>
+
+                                {product?.category && (
+                                    <p>Category: {product?.category?.name}</p>
                                 )}
                             </div>
+
+                            {product?.tags && product?.tags.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                    {product?.tags.slice(0, 3).map((tag, i) => (
+                                        <span
+                                            key={i}
+                                            className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
+                                        >
+                                            {tag}
+                                        </span>
+                                    ))}
+
+                                    {product?.tags.length > 3 && (
+                                        <span className="text-xs text-gray-500">
+                                            +{product?.tags.length - 3} more
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                    </Link>
+                    </div>
                 );
             })}
         </div>
@@ -303,97 +304,104 @@ const ProductsSection = () => {
                             const img = getProductImage(product);
 
                             return (
-                                <Link to={`/products/${product?.slug}`} key={product?._id}>
-                                    <tr key={product?._id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex items-center">
-                                                <div className="h-10 w-10 ">
-                                                    {img ? (
-                                                        <Image
-                                                            className="h-10 w-10 rounded object-cover"
-                                                            src={img}
-                                                            alt={product?.name}
-                                                        />
-                                                    ) : (
-                                                        <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
-                                                            <FaBox className="text-gray-400" />
-                                                        </div>
-                                                    )}
-                                                </div>
+                                <tr key={product?._id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center">
+                                            <div className="h-10 w-10 ">
+                                                {img ? (
+                                                    <Image
+                                                        className="h-10 w-10 rounded object-cover"
+                                                        src={img}
+                                                        alt={product?.name}
+                                                    />
+                                                ) : (
+                                                    <div className="h-10 w-10 rounded bg-gray-200 flex items-center justify-center">
+                                                        <FaBox className="text-gray-400" />
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                                <div className="ml-4">
+                                            <div className="ml-4">
+                                                <Link
+                                                    className="hover:underline"
+                                                    to={`/products/${product?.slug}`}>
                                                     <div className="text-sm font-medium text-gray-900">
                                                         {product?.name?.length > 90
                                                             ? product?.name.substring(0, 90) + "…"
                                                             : product?.name}
                                                     </div>
-                                                    <div className="text-sm text-gray-500">{product?.sku}</div>
-                                                </div>
+                                                </Link>
+                                                <div className="text-sm text-gray-500">{product?.sku}</div>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-bold text-gray-900">
-                                                {formatPrice(product?.price || product?.variants?.[0]?.price)}
+                                        </div>
+                                    </td>
+
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="text-sm font-bold text-gray-900">
+                                            {formatPrice(product?.price || product?.variants?.[0]?.price)}
+                                        </div>
+                                        {product?.discountPrice && (
+                                            <div className="text-sm text-gray-500 line-through">
+                                                {formatPrice(product?.discountPrice || product?.variants?.[0]?.discountPrice)}
                                             </div>
-                                            {product?.discountPrice && (
-                                                <div className="text-sm text-gray-500 line-through">
-                                                    {formatPrice(product?.discountPrice || product?.variants?.[0]?.discountPrice)}
-                                                </div>
+                                        )}
+                                    </td>
+
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {product?.brand?.name}
+                                    </td>
+
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${(product?.stock || product?.variants?.[0]?.stock) > 10
+                                                ? "bg-green-100 text-green-800"
+                                                : (product?.stock || product?.variants?.[0]?.stock) > 0
+                                                    ? "bg-yellow-100 text-yellow-800"
+                                                    : "bg-red-100 text-red-800"
+                                                }`}
+                                        >
+                                            {product?.stock || product?.variants?.[0]?.stock || 0} in stock
+                                        </span>
+                                    </td>
+
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex gap-1">
+                                            {product?.isBestSeller && (
+                                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    Best Seller
+                                                </span>
                                             )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {product?.brand?.name}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${(product?.stock || product?.variants?.[0]?.stock) > 10
-                                                    ? "bg-green-100 text-green-800"
-                                                    : (product?.stock || product?.variants?.[0]?.stock) > 0
-                                                        ? "bg-yellow-100 text-yellow-800"
-                                                        : "bg-red-100 text-red-800"
-                                                    }`}
+                                            {product?.isNewArrival && (
+                                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+                                                    New Arrival
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={() => handleView(product)}
+                                                className="text-blue-600 hover:text-blue-900 transition-colors"
                                             >
-                                                {product?.stock || product?.variants?.[0]?.stock || 0} in stock
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex gap-1">
-                                                {product?.isBestSeller && (
-                                                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                        Best Seller
-                                                    </span>
-                                                )}
-                                                {product?.isNewArrival && (
-                                                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
-                                                        New Arrival
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={() => handleView(product)}
-                                                    className="text-blue-600 hover:text-blue-900 transition-colors"
-                                                >
-                                                    <FaEye size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleUpdate(product)}
-                                                    className="text-green-600 hover:text-green-900 transition-colors"
-                                                >
-                                                    <FaEdit size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteClick(product?._id)}
-                                                    className="text-red-600 hover:text-red-900 transition-colors"
-                                                >
-                                                    <FaTrash size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </Link>
+                                                <FaEye size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleUpdate(product)}
+                                                className="text-green-600 hover:text-green-900 transition-colors"
+                                            >
+                                                <FaEdit size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteClick(product?._id)}
+                                                className="text-red-600 hover:text-red-900 transition-colors"
+                                            >
+                                                <FaTrash size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
                             );
                         })}
                     </tbody>
