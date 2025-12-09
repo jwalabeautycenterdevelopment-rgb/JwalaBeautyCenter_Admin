@@ -12,6 +12,7 @@ import dealsReducer from "./slice/dealsSlice";
 import typeReducer from "./slice/typeSlice";
 import orderReducer from "./slice/OrderSlice";
 import usersReducer from "./slice/usersSlice";
+import reportReducer from "./slice/reportSlice";
 import dashboardReducer from "./slice/dashboardSlice";
 const reducer = combineReducers({
   login: loginReducer,
@@ -28,5 +29,6 @@ const reducer = combineReducers({
   order: orderReducer,
   users: usersReducer,
   adminDashboard: dashboardReducer,
+  report: reportReducer,
 });
 export default reducer;

@@ -18,6 +18,8 @@ import Type from './pages/Type/Type';
 import TypeName from './pages/TypeName/TypeName';
 import Order from './pages/Order/Order';
 import Users from "./pages/Users/Users";
+import Reports from "./pages/Reports/Reports";
+
 function App() {
   return (
     <>
@@ -48,6 +50,7 @@ function App() {
           <Route path="/typename" element={<TypeName />} />
           <Route path="/order" element={<Order />} />
           <Route path="/users" element={<Users />} />
+          <Route path="/reports" element={<Reports />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

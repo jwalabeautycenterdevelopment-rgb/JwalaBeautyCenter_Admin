@@ -1,8 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { FetchApi } from "../../api/FetchApi";
 
-export const fetchAdminDashboard = createAsyncThunk(
-  "admin/fetchDashboard",
+export const fetchReport = createAsyncThunk(
+  "report/fetchReport",
   async (payload = {}, thunkAPI) => {
     const token = thunkAPI.getState()?.login?.accessToken;
     const query = Object.keys(payload).length
@@ -11,7 +11,7 @@ export const fetchAdminDashboard = createAsyncThunk(
 
     try {
       const response = await FetchApi({
-        endpoint: `/admin/dashboard${query}`,
+        endpoint: `/admin/report${query}`,
         method: "GET",
         token,
       });
@@ -23,35 +23,33 @@ export const fetchAdminDashboard = createAsyncThunk(
   }
 );
 
-const adminDashboardSlice = createSlice({
-  name: "adminDashboard",
+const reportSlice = createSlice({
+  name: "report",
   initialState: {
-    dashboardData: null,
+    reportData: null,
     loading: false,
     error: null,
   },
-
   reducers: {
-    clearDashboardError(state) {
+    clearReportError(state) {
       state.error = null;
     },
   },
-
   extraReducers: (builder) => {
     builder
-      .addCase(fetchAdminDashboard.pending, (state) => {
+      .addCase(fetchReport.pending, (state) => {
         state.loading = true;
       })
-      .addCase(fetchAdminDashboard.fulfilled, (state, action) => {
+      .addCase(fetchReport.fulfilled, (state, action) => {
         state.loading = false;
-        state.dashboardData = action.payload;
+        state.reportData = action.payload;
       })
-      .addCase(fetchAdminDashboard.rejected, (state, action) => {
+      .addCase(fetchReport.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || "Failed to load dashboard";
+        state.error = action.payload || "Failed to load report";
       });
   },
 });
 
-export const { clearDashboardError } = adminDashboardSlice.actions;
-export default adminDashboardSlice.reducer;
+export const { clearReportError } = reportSlice.actions;
+export default reportSlice.reducer;

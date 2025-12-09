@@ -15,6 +15,7 @@ const SubcategoriesSection = () => {
     const [isModalAddOpen, setIsModalAddOpen] = useState(false);
     const [selectedCategoryId, setSelectedCategoryId] = useState(null);
     const [updateData, setUpdateData] = useState(null)
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         dispatch(getSubCategory());
@@ -53,8 +54,15 @@ const SubcategoriesSection = () => {
         setIsModalAddOpen(true)
     }
 
+    const filteredData = allSubCategories
+        ?.filter((sub) =>
+            sub?.name?.toLowerCase().includes(search.toLowerCase())
+        );
+
     return (
         <MainLayout
+            Inputvalue={search}
+            InputOnChange={e => setSearch(e)}
             onButtonClick={() => setIsModalAddOpen(true)}
             subtitle="Manage subcategories within categories"
             buttonName="Add Sub Category"
@@ -63,7 +71,7 @@ const SubcategoriesSection = () => {
         >
             <section className="my-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {allSubCategories?.map((sub) => (
+                    {filteredData?.map((sub) => (
                         <div
                             key={sub?._id}
                             className="bg-white/40 rounded-xl shadow-lg border border-gray-200 p-6 w-full"
