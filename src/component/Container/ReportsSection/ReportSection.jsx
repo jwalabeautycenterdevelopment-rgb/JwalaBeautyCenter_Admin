@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { fetchReport } from "../../../store/slice/reportSlice"
 import {
@@ -27,17 +27,68 @@ import {
     Award,
     ShoppingCart,
     BarChart3,
-    Percent
+    Percent,
+    Filter,
+    X
 } from 'lucide-react'
 import Image from "../../../common/Image"
+import { getSubCategory } from "../../../store/slice/subCategorySlice"
+import { getBrands } from "../../../store/slice/brandsSlice"
+import SingleSelectDropdown from "../../../common/SingleSelectDropdown"
 
 const ReportSection = () => {
     const dispatch = useDispatch()
+    const [filterType, setFilterType] = useState('month')
+    const [showFilters, setShowFilters] = useState(false)
+    const [filters, setFilters] = useState({
+        categoryId: '',
+        brandId: '',
+        granularity: '',
+        last30: false,
+        startDate: '',
+        endDate: ''
+    })
     const { reportData: data, loading } = useSelector((state) => state.report)
+    const { allSubCategories, } = useSelector((state) => state.subcategory);
+    const { allBrands, } = useSelector(
+        (state) => state.brands
+    );
 
     useEffect(() => {
-        dispatch(fetchReport())
+        dispatch(getSubCategory())
+        dispatch(getBrands())
     }, [dispatch])
+
+    useEffect(() => {
+        const payload = {
+            filterType,
+            ...filters
+        }
+        Object.keys(payload).forEach(key => {
+            if (payload[key] === '' || payload[key] === false) {
+                delete payload[key]
+            }
+        })
+        dispatch(fetchReport(payload))
+    }, [dispatch, filterType, filters])
+
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({
+            ...prev,
+            [key]: value
+        }))
+    }
+
+    const resetFilters = () => {
+        setFilters({
+            categoryId: '',
+            brandId: '',
+            granularity: '',
+            last30: false,
+            startDate: '',
+            endDate: ''
+        })
+    }
 
     const formatDate = (dateString) => {
         const date = new Date(dateString)
@@ -76,7 +127,7 @@ const ReportSection = () => {
                     <p className="font-semibold text-gray-800">{label}</p>
                     {payload?.map((entry, index) => (
                         <p key={index} className="text-sm" style={{ color: entry.color }}>
-                            {entry.name}: {entry.name === 'revenue' ? `$${entry.value}` : entry.value}
+                            {entry.name}: {entry.name === 'revenue' ? `₹${entry.value}` : entry.value}
                         </p>
                     ))}
                 </div>
@@ -100,7 +151,195 @@ const ReportSection = () => {
                     <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
                     <p className="text-gray-600">Overview of your store performance</p>
                 </div>
+                <div className="flex items-center gap-4">
+                    <select
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-lg bg-white"
+                    >
+                        <option value="day">Day</option>
+                        <option value="month">Month</option>
+                        <option value="year">Year</option>
+                    </select>
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`px-4 py-2 rounded-lg flex items-center gap-2 ${showFilters ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >
+                        <Filter size={16} />
+                        Filters
+                        {(filters.categoryId || filters.brandId || filters.last30 || filters.startDate) && (
+                            <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                !
+                            </span>
+                        )}
+                    </button>
+                </div>
             </div>
+
+            {showFilters && (
+                <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold text-gray-800">Advanced Filters</h3>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={resetFilters}
+                                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                            >
+                                Reset
+                            </button>
+                            <button
+                                onClick={() => setShowFilters(false)}
+                                className="p-1 hover:bg-gray-100 rounded"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                        <div>
+                            <SingleSelectDropdown
+                                label="Brands *"
+                                options={allSubCategories}
+                                value={filters.categoryId}
+                                onChange={(val) => handleFilterChange('categoryId', val)}
+                                searchable={true}
+                            />
+                        </div>
+                        <div>
+                            <SingleSelectDropdown
+                                label="Brands *"
+                                options={allBrands}
+                                value={filters.brandId}
+                                onChange={(val) => handleFilterChange('brandId', val)}
+                                searchable={true}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Granularity
+                            </label>
+                            <select
+                                value={filters.granularity}
+                                onChange={(e) => handleFilterChange('granularity', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
+                            >
+                                <option value="">Auto</option>
+                                <option value="hourly">Hourly</option>
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Quick Filters
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => handleFilterChange('last30', !filters.last30)}
+                                    className={`px-3 py-1 text-sm rounded ${filters.last30 ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                                >
+                                    Last 30 Days
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const today = new Date().toISOString().split('T')[0]
+                                        const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                                        handleFilterChange('startDate', lastWeek)
+                                        handleFilterChange('endDate', today)
+                                        handleFilterChange('last30', false)
+                                    }}
+                                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                                >
+                                    Last 7 Days
+                                </button>
+                            </div>
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Custom Date Range
+                            </label>
+                            <div className="flex gap-2">
+                                <div className="flex-1">
+                                    <input
+                                        type="date"
+                                        value={filters.startDate}
+                                        onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                    />
+                                </div>
+                                <span className="flex items-center">to</span>
+                                <div className="flex-1">
+                                    <input
+                                        type="date"
+                                        value={filters.endDate}
+                                        onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Active Filters
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {filters.categoryId && (
+                                    <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                                        Category: {allSubCategories.find(c => c._id === filters.categoryId)?.name || 'Selected'}
+                                        <button
+                                            onClick={() => handleFilterChange('categoryId', '')}
+                                            className="ml-1 text-blue-600 hover:text-blue-800"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                )}
+                                {filters.brandId && (
+                                    <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                                        Brand: {allBrands.find(b => b._id === filters.brandId)?.name || 'Selected'}
+                                        <button
+                                            onClick={() => handleFilterChange('brandId', '')}
+                                            className="ml-1 text-green-600 hover:text-green-800"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                )}
+                                {filters.last30 && (
+                                    <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm">
+                                        Last 30 Days
+                                        <button
+                                            onClick={() => handleFilterChange('last30', false)}
+                                            className="ml-1 text-yellow-600 hover:text-yellow-800"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                )}
+                                {filters.startDate && filters.endDate && (
+                                    <span className="inline-flex items-center gap-1 bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                                        {filters.startDate} to {filters.endDate}
+                                        <button
+                                            onClick={() => {
+                                                handleFilterChange('startDate', '')
+                                                handleFilterChange('endDate', '')
+                                            }}
+                                            className="ml-1 text-purple-600 hover:text-purple-800"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                )}
+                                {!filters.categoryId && !filters.brandId && !filters.last30 && !filters.startDate && (
+                                    <span className="text-gray-500 text-sm">No filters applied</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between">
@@ -167,17 +406,20 @@ const ReportSection = () => {
                 <div className="lg:col-span-2 bg-white rounded-xl shadow-md p-6 border border-gray-200">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-semibold text-gray-800">Revenue & Orders</h2>
-                        <BarChart3 className="h-5 w-5 text-gray-500" />
+                        <div className="flex items-center gap-2">
+                            <BarChart3 className="h-5 w-5 text-gray-500" />
+                            {filters.granularity && (
+                                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                    {filters.granularity}
+                                </span>
+                            )}
+                        </div>
                     </div>
-                    <div className="h-80">
+                    <div className="h-80 w-full" style={{ minWidth: 0, minHeight: 0 }}>
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={revenueChartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                                <XAxis
-                                    dataKey="date"
-                                    stroke="#666"
-                                    fontSize={12}
-                                />
+                                <XAxis dataKey="date" stroke="#666" fontSize={12} />
                                 <YAxis
                                     stroke="#666"
                                     fontSize={12}
@@ -190,18 +432,12 @@ const ReportSection = () => {
                                     dataKey="revenue"
                                     stroke="#3b82f6"
                                     strokeWidth={2}
-                                    dot={{ stroke: '#3b82f6', strokeWidth: 2, r: 4 }}
-                                    activeDot={{ r: 6 }}
-                                    name="Revenue ($)"
                                 />
                                 <Line
                                     type="monotone"
                                     dataKey="orders"
                                     stroke="#10b981"
                                     strokeWidth={2}
-                                    dot={{ stroke: '#10b981', strokeWidth: 2, r: 4 }}
-                                    activeDot={{ r: 6 }}
-                                    name="Orders"
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -220,7 +456,7 @@ const ReportSection = () => {
                                     cx="50%"
                                     cy="50%"
                                     labelLine={false}
-                                    label={(entry) => `${entry.name}: $${entry.value}`}
+                                    label={(entry) => `${entry.name}: ₹${entry.value}`}
                                     outerRadius={80}
                                     fill="#8884d8"
                                     dataKey="value"
@@ -229,13 +465,13 @@ const ReportSection = () => {
                                         <Cell key={`cell-${index}`} fill={entry.fill} />
                                     ))}
                                 </Pie>
-                                <Tooltip formatter={(value) => [`$${value}`, 'Revenue']} />
+                                <Tooltip formatter={(value) => [`₹${value}`, 'Revenue']} />
                                 <Legend />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
                     <div className="mt-4 space-y-2">
-                        {data?.brandWiseSales?.map((brand, index) => (
+                        {allBrands?.map((brand, index) => (
                             <div key={brand._id} className="flex justify-between items-center">
                                 <div className="flex items-center">
                                     <div
@@ -244,12 +480,13 @@ const ReportSection = () => {
                                     />
                                     <span className="text-sm text-gray-700">{brand.brandName}</span>
                                 </div>
-                                <span className="font-semibold text-gray-800">${brand.revenue}</span>
+                                <span className="font-semibold text-gray-800">₹{brand.revenue}</span>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                     <div className="flex items-center justify-between mb-6">
@@ -311,7 +548,7 @@ const ReportSection = () => {
                         <ShoppingCart className="h-5 w-5 text-gray-500" />
                     </div>
                     <div className="space-y-4">
-                        {data?.recentOrders?.map((order) => (
+                        {data?.recentOrders?.slice(0, 3).map((order) => (
                             <div key={order._id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
@@ -383,6 +620,7 @@ const ReportSection = () => {
                     </div>
                 </div>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Store Overview</h2>

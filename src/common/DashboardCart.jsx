@@ -20,6 +20,10 @@ export function SalesOverview({ salesDataset }) {
         dispatch(fetchAdminDashboard({ sales: filter }));
     }, [filter])
 
+    const salesMapData = salesDataset.map((item) => ({
+        month: item.label,
+        sales: item.totalRevenue,
+    }));
     return (
         <Card className="h-full">
             <div className="flex items-center justify-between mb-6">
@@ -46,7 +50,7 @@ export function SalesOverview({ salesDataset }) {
             </div>
             <div className="w-full h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={salesDataset} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <AreaChart data={salesMapData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />

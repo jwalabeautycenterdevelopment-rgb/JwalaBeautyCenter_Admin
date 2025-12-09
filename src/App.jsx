@@ -19,6 +19,7 @@ import TypeName from './pages/TypeName/TypeName';
 import Order from './pages/Order/Order';
 import Users from "./pages/Users/Users";
 import Reports from "./pages/Reports/Reports";
+import ProductsDetails from './pages/ProductsDetails/ProductsDetails';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/deals" element={<Deals />} />
           <Route path="/products" element={<Products />} />
+          <Route path="/products/:id" element={<ProductsDetails />} />
           <Route path="/type" element={<Type />} />
           <Route path="/typename" element={<TypeName />} />
           <Route path="/order" element={<Order />} />

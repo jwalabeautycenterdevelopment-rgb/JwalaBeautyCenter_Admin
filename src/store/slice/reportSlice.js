@@ -5,13 +5,21 @@ export const fetchReport = createAsyncThunk(
   "report/fetchReport",
   async (payload = {}, thunkAPI) => {
     const token = thunkAPI.getState()?.login?.accessToken;
-    const query = Object.keys(payload).length
-      ? `?${new URLSearchParams(payload).toString()}`
-      : "";
+
+    const params = new URLSearchParams();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.append(key, value);
+      }
+    });
+
+    if (payload.last30) {
+      params.append("last30", "true");
+    }
 
     try {
       const response = await FetchApi({
-        endpoint: `/admin/report${query}`,
+        endpoint: `/admin/report?${params.toString()}`,
         method: "GET",
         token,
       });
