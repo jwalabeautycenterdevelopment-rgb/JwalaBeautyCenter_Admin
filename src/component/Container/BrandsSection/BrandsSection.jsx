@@ -23,12 +23,11 @@ const BrandSection = () => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isModalAddOpen, setIsModalAddOpen] = useState(false);
-    console.log(isModalAddOpen);
-
     const [selectedBrandId, setSelectedBrandId] = useState(null);
     const [updateData, setUpdateData] = useState(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [viewData, setViewData] = useState(null);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         dispatch(getBrands());
@@ -72,8 +71,15 @@ const BrandSection = () => {
         setIsModalAddOpen(true);
     };
 
+    const filteredBrands = allBrands
+        ?.filter((brand) =>
+            brand?.name?.toLowerCase().includes(search.toLowerCase())
+        );
+
     return (
         <MainLayout
+            Inputvalue={search}
+            InputOnChange={e => setSearch(e)}
             onButtonClick={() => setIsModalAddOpen(true)}
             subtitle="Manage all brands for your store"
             buttonName="Add Brand"
@@ -82,7 +88,7 @@ const BrandSection = () => {
         >
             <section className="my-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {allBrands?.map((brand) => (
+                    {filteredBrands?.map((brand) => (
                         <div
                             key={brand?._id}
                             className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full relative group"

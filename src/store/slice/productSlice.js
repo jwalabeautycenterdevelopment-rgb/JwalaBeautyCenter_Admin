@@ -37,6 +37,21 @@ export const getProducts = createAsyncThunk(
   }
 );
 
+export const getSingleProduct = createAsyncThunk(
+  "products/getSingleProduct",
+  async (slug, thunkAPI) => {
+    try {
+      const response = await FetchApi({
+        endpoint: `/admin/product/${slug}`,
+        method: "GET",
+      });
+      return response;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err?.message);
+    }
+  }
+);
+
 export const updateProduct = createAsyncThunk(
   "admin/product/update",
   async ({ slug, formData }, thunkAPI) => {
@@ -79,7 +94,7 @@ const productSlice = createSlice({
     loadingCreate: false,
     createSuccessMsg: null,
     createErrorMsg: null,
-
+    singleProduct: [],
     loadingGet: false,
     allProducts: [],
 
@@ -119,8 +134,7 @@ const productSlice = createSlice({
       })
       .addCase(createProduct.rejected, (state, action) => {
         state.loadingCreate = false;
-        state.createErrorMsg =
-          action?.payload || "Failed to create product";
+        state.createErrorMsg = action?.payload || "Failed to create product";
       })
 
       .addCase(getProducts.pending, (state) => {
@@ -131,6 +145,17 @@ const productSlice = createSlice({
         state.allProducts = action?.payload?.data?.products || [];
       })
       .addCase(getProducts.rejected, (state) => {
+        state.loadingGet = false;
+      })
+
+      .addCase(getSingleProduct.pending, (state) => {
+        state.loadingGet = true;
+      })
+      .addCase(getSingleProduct.fulfilled, (state, action) => {
+        state.loadingGet = false;
+        state.singleProduct = action?.payload?.data?.product || [];
+      })
+      .addCase(getSingleProduct.rejected, (state) => {
         state.loadingGet = false;
       })
 
@@ -146,8 +171,7 @@ const productSlice = createSlice({
       })
       .addCase(updateProduct.rejected, (state, action) => {
         state.loadingUpdate = false;
-        state.updateErrorMsg =
-          action?.payload || "Failed to update product";
+        state.updateErrorMsg = action?.payload || "Failed to update product";
       })
 
       .addCase(deleteProduct.pending, (state) => {
@@ -162,8 +186,7 @@ const productSlice = createSlice({
       })
       .addCase(deleteProduct.rejected, (state, action) => {
         state.loadingDelete = false;
-        state.deleteErrorMsg =
-          action?.payload || "Failed to delete product";
+        state.deleteErrorMsg = action?.payload || "Failed to delete product";
       });
   },
 });

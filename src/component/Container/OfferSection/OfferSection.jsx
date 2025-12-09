@@ -31,6 +31,7 @@ const OfferSection = () => {
     const [updateData, setUpdateData] = useState(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [viewData, setViewData] = useState(null);
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         dispatch(getOffers());
@@ -69,8 +70,15 @@ const OfferSection = () => {
         setIsModalAddOpen(true);
     };
 
+    const filteredOffers = allOffers
+        ?.filter((offer) =>
+            offer?.title?.toLowerCase().includes(search.toLowerCase())
+        );
+
     return (
         <MainLayout
+            Inputvalue={search}
+            InputOnChange={e => setSearch(e)}
             onButtonClick={() => setIsModalAddOpen(true)}
             subtitle="Manage all Offers for your store"
             buttonName="Add Offer"
@@ -80,7 +88,7 @@ const OfferSection = () => {
             <section className="my-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                    {allOffers?.map((offer) => (
+                    {filteredOffers?.map((offer) => (
                         <div
                             key={offer?._id}
                             className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full relative group"

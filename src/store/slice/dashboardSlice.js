@@ -1,14 +1,17 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { FetchApi } from "../../api/FetchApi";
 
-
 export const fetchAdminDashboard = createAsyncThunk(
   "admin/fetchDashboard",
-  async (_, thunkAPI) => {
+  async (payload = {}, thunkAPI) => {
     const token = thunkAPI.getState()?.login?.accessToken;
+    const query = Object.keys(payload).length
+      ? `?${new URLSearchParams(payload).toString()}`
+      : "";
+
     try {
       const response = await FetchApi({
-        endpoint: "/admin/dashboard",
+        endpoint: `/admin/dashboard${query}`,
         method: "GET",
         token,
       });
@@ -19,7 +22,6 @@ export const fetchAdminDashboard = createAsyncThunk(
     }
   }
 );
-
 
 const adminDashboardSlice = createSlice({
   name: "adminDashboard",

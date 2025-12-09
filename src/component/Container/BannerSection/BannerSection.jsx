@@ -19,7 +19,7 @@ const BannerSection = () => {
     const { allBanners, deleteSuccessMsg, deleteErrorMsg } = useSelector(
         (state) => state.banner
     );
-
+    const [search, setSearch] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isModalAddOpen, setIsModalAddOpen] = useState(false);
     const [selectedBannerId, setSelectedBannerId] = useState(null);
@@ -70,8 +70,15 @@ const BannerSection = () => {
         setIsModalAddOpen(true);
     };
 
+    const filteredBanners = allBanners
+        ?.filter((banner) =>
+            banner?.header?.toLowerCase().includes(search.toLowerCase())
+        );
+
     return (
         <MainLayout
+            Inputvalue={search}
+            InputOnChange={e => setSearch(e)}
             onButtonClick={() => setIsModalAddOpen(true)}
             subtitle="Manage banners for your website"
             buttonName="Add Banner"
@@ -80,7 +87,7 @@ const BannerSection = () => {
         >
             <section className="my-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {allBanners?.map((banner) => (
+                    {filteredBanners?.map((banner) => (
                         <div
                             key={banner?._id}
                             className="bg-white/40 rounded-xl shadow-lg border border-gray-200 p-6 w-full relative group"

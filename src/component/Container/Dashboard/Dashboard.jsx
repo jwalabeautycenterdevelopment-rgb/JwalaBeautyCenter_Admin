@@ -4,13 +4,13 @@ import Button from "../../../common/Button";
 import { Card, SalesOverview, StatCard } from "../../../common/DashboardCart";
 import {
     ShoppingCart,
-    DollarSign,
     Package,
     AlertTriangle,
     MoreHorizontal,
     TrendingUpDown,
     IndianRupee
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAdminDashboard } from "../../../store/slice/dashboardSlice";
 import { Link, Links } from "react-router-dom";
@@ -190,13 +190,13 @@ export default function Dashboard() {
                         <h3 className="text-lg font-semibold text-slate-800">Recent Orders</h3>
                         <p className="text-sm text-slate-500">Latest customer orders</p>
                     </div>
-                    <Link to={"/order"} className="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50">
+                    <Link to={"/order"} className="px-4 py-2 border text-sm border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50">
                         View All
                     </Link>
                 </div>
                 <div className="space-y-4">
                     {recentOrders.length > 0 ? (
-                        recentOrders.map((order) => (
+                        recentOrders.slice(0, 3).map((order) => (
                             <div key={order._id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 bg-white border border-slate-200 rounded flex items-center justify-center">
@@ -204,7 +204,7 @@ export default function Dashboard() {
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <span className="font-medium">{order.orderId}</span>
+                                            <span className="font-medium text-sm">{order.orderId}</span>
                                             <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
                                                 {order.status}
                                             </span>
@@ -212,14 +212,12 @@ export default function Dashboard() {
                                         <p className="text-sm text-slate-600">{order.shippingAddress?.fullName || "Customer"}</p>
                                     </div>
                                 </div>
-
                                 <div className="text-right">
                                     <p className="font-semibold">₹{order.totalAmount}</p>
                                     <p className="text-sm text-slate-500">
                                         {formatDate(order.placedAt || order.createdAt)}
                                     </p>
                                 </div>
-
                                 <button className="p-2 hover:bg-slate-200 rounded">
                                     <MoreHorizontal className="w-4 h-4 text-slate-500" />
                                 </button>
@@ -242,16 +240,22 @@ export default function Dashboard() {
                 <header className="mb-8 flex justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-                        <p className="text-slate-600 mt-2 flex items-center gap-2">
-                            Welcome back! Here's your store overview 👋
+                        <p className="text-slate-600 text-md  font-medium mt-2 flex items-center gap-2">
+                            Welcome back! Here's your store overview{" "}
+                            <motion.span
+                                className="inline-block"
+                                animate={{ rotate: [0, 20, -20, 20, -20, 0] }}
+                                transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
+                            >
+                                👋
+                            </motion.span>
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Button className="px-4 py-2.5 border border-slate-200 rounded-lg text-slate-700">
+                        <Link to={"/reports"} className="px-4 flex gap-1 items-center py-2.5 border border-slate-200 rounded-lg text-slate-700">
                             <TrendingUpDown className="w-4 h-4" /> View Reports
-                        </Button>
-
-                        <Link to={"/products"} className="px-4 py-2.5 bg-linear-to-r from-pink-500 to-rose-500 text-white rounded-lg shadow-lg">
+                        </Link>
+                        <Link to={"/products"} className="px-4 py-2 text-sm bg-linear-to-r from-pink-500 to-rose-500 text-white rounded-lg shadow-lg">
                             Add Product
                         </Link>
                     </div>
@@ -264,7 +268,7 @@ export default function Dashboard() {
                 <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                     <div className="lg:col-span-2">
                         <SalesOverview
-                            monthWiseSales={dashboardData?.monthWiseSales || []}
+                            salesDataset={dashboardData?.salesData || []}
                         />
                     </div>
                     <div>

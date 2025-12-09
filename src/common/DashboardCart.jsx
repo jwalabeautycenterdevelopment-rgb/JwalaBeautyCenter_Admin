@@ -1,7 +1,80 @@
 "use client";
+import { useEffect, useState } from "react";
+import { TrendingUpDown } from "lucide-react";
+import {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+    CartesianGrid,
+} from "recharts";
+import { fetchAdminDashboard } from "../store/slice/dashboardSlice";
+import { useDispatch } from "react-redux";
 
-import { useState } from "react";
-import {  TrendingUpDown } from "lucide-react";
+export function SalesOverview({ salesDataset }) {
+    const dispatch = useDispatch();
+    const [filter, setFilter] = useState("month");
+    useEffect(() => {
+        dispatch(fetchAdminDashboard({ sales: filter }));
+    }, [filter])
+
+    const salesMapData = salesDataset.map((item) => ({
+        month: item.label,
+        sales: item.totalRevenue,
+    }));
+    return (
+        <Card className="h-full">
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h3 className="text-lg font-semibold text-slate-800">Sales Overview</h3>
+                    <p className="text-sm text-slate-500 capitalize">
+                        {filter}ly sales performance
+                    </p>
+                </div>
+                <div className="flex bg-slate-100 rounded-lg p-1">
+                    {["day", "week", "month"]?.map((type) => (
+                        <button
+                            key={type}
+                            onClick={() => setFilter(type)}
+                            className={`px-4 py-1 rounded-md text-sm transition-all ${filter === type
+                                ? "bg-white shadow text-slate-800 font-medium"
+                                : "text-slate-600"
+                                }`}
+                        >
+                            {type.charAt(0).toUpperCase() + type.slice(1)}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            <div className="w-full h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={salesMapData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.35} />
+                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.05} />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200" />
+                        <XAxis dataKey="month" stroke="#94a3b8" />
+                        <YAxis stroke="#94a3b8" />
+                        <Tooltip />
+                        <Area
+                            type="monotone"
+                            dataKey="sales"
+                            stroke="#3b82f6"
+                            strokeWidth={2}
+                            fill="url(#colorSales)"
+                        />
+                    </AreaChart>
+                </ResponsiveContainer>
+            </div>
+        </Card>
+    );
+}
+
 
 export function Card({ children, className = "" }) {
     return (
@@ -23,95 +96,8 @@ export function StatCard({ title, value, hint, icon: Icon, color }) {
                         {hint}
                     </p>
                 </div>
-
                 <div className={`p-3 rounded-xl ${color}`}>
-                    {
-                        
-                    }
                     <Icon className="w-4 h-4" />
-                </div>
-            </div>
-        </Card>
-    );
-}
-
-export function SalesOverview() {
-    const [filter, setFilter] = useState("month");
-
-    const dayData = [
-        { month: "Mon", sales: 12 },
-        { month: "Tue", sales: 18 },
-        { month: "Wed", sales: 10 },
-        { month: "Thu", sales: 15 },
-        { month: "Fri", sales: 20 },
-        { month: "Sat", sales: 25 },
-        { month: "Sun", sales: 22 },
-    ];
-
-    const weekData = [
-        { month: "W1", sales: 140 },
-        { month: "W2", sales: 160 },
-        { month: "W3", sales: 120 },
-        { month: "W4", sales: 170 },
-    ];
-
-    const monthData = [
-        { month: "Jan", sales: 65 },
-        { month: "Feb", sales: 78 },
-        { month: "Mar", sales: 90 },
-        { month: "Apr", sales: 81 },
-        { month: "May", sales: 56 },
-        { month: "Jun", sales: 55 },
-        { month: "Jul", sales: 40 },
-    ];
-
-    const salesData =
-        filter === "day" ? dayData : filter === "week" ? weekData : monthData;
-
-    const maxSales = Math.max(...salesData.map((d) => d.sales));
-
-    return (
-        <Card className="h-full">
-            <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h3 className="text-lg font-semibold text-slate-800">Sales Overview</h3>
-                    <p className="text-sm text-slate-500 capitalize">
-                        {filter}ly sales performance
-                    </p>
-                </div>
-                <div className="flex bg-slate-100 rounded-lg p-1">
-                    {["day", "week", "month"].map((type) => (
-                        <button
-                            key={type}
-                            onClick={() => setFilter(type)}
-                            className={`px-4 py-1 rounded-md text-sm transition-all ${filter === type
-                                    ? "bg-white shadow text-slate-800 font-medium"
-                                    : "text-slate-600"
-                                }`}
-                        >
-                            {type.charAt(0).toUpperCase() + type.slice(1)}
-                        </button>
-                    ))}
-                </div>
-            </div>
-            <div className="space-y-4">
-                <div className="flex items-end justify-between h-32 pt-4">
-                    {salesData.map((data) => (
-                        <div key={data.month} className="flex flex-col items-center flex-1">
-                            <div className="text-xs text-slate-500 mb-2">{data.month}</div>
-                            <div
-                                className="w-6 bg-linear-to-t from-blue-500 to-blue-300 rounded-t-lg transition-all duration-300"
-                                style={{ height: `${(data.sales / maxSales) * 80}%` }}
-                            ></div>
-                            <div className="text-xs font-medium text-slate-700 mt-1">{data.sales}</div>
-                        </div>
-                    ))}
-                </div>
-                <div className="flex justify-center gap-6 pt-4 border-t border-slate-100">
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                        <span className="text-sm text-slate-600">Sales Volume</span>
-                    </div>
                 </div>
             </div>
         </Card>

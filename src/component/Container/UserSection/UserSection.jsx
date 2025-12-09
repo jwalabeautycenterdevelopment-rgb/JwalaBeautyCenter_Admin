@@ -19,8 +19,8 @@ const UserSection = () => {
     const dispatch = useDispatch();
     const { users } = useSelector((state) => state.users);
     const [search, setSearch] = useState("");
-    const [filterStatus, setFilterStatus] = useState("all"); // all, active, inactive
-    const [sortBy, setSortBy] = useState("newest"); // newest, oldest, name
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [sortBy, setSortBy] = useState("newest");
     const [selectedUsers, setSelectedUsers] = useState([]);
 
     useEffect(() => {
@@ -101,30 +101,17 @@ const UserSection = () => {
     return (
         <MainLayout
             Inputvalue={search}
-            InputOnChange={(e) => setSearch(e.target.value)}
+            InputOnChange={(e) => setSearch(e)}
             subtitle="Manage and view all registered users"
             itemsCount={sortedUsers.length}
         >
             <div className="p-6 space-y-6">
-                <div className="flex flex-col gap-4 p-4 bg-white border border-gray-300 rounded-lg md:flex-row md:items-center">
-                    <div className="flex-1">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                            <input
-                                type="text"
-                                placeholder="Search users by name, email, or phone..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
-                    </div>
-
+                <div className="flex justify-end gap-4 px-4 rounded-lg md:flex-row md:items-center">
                     <div className="flex gap-2">
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="px-3 py-2 border   border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
@@ -134,7 +121,7 @@ const UserSection = () => {
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="px-3 py-2 border  border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="newest">Newest First</option>
                             <option value="oldest">Oldest First</option>
@@ -165,7 +152,7 @@ const UserSection = () => {
                         </div>
                     </div>
                 )}
-                <div className="overflow-hidden bg-white border rounded-lg shadow-sm">
+                <div className="overflow-hidden bg-white  rounded-lg shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">

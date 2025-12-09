@@ -15,6 +15,7 @@ const ParentCategoriesSection = () => {
     const [isModalAddOpen, setIsModalAddOpen] = useState(false);
     const [selectedCategoryId, setSelectedCategoryId] = useState(null);
     const [updateData, setUpdateData] = useState(null)
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         dispatch(getParentCategory());
@@ -57,8 +58,16 @@ const ParentCategoriesSection = () => {
         console.log("Toggle status for id:", id);
     };
 
+    const filteredData = getAllCatogory
+        ?.filter((banner) =>
+            banner?.name?.toLowerCase().includes(search.toLowerCase())
+        );
+
+
     return (
         <MainLayout
+            Inputvalue={search}
+            InputOnChange={e => setSearch(e)}
             onButtonClick={() => setIsModalAddOpen(true)}
             subtitle="Manage your main product categories"
             buttonName="Add Parent Category"
@@ -67,7 +76,7 @@ const ParentCategoriesSection = () => {
         >
             <section className="my-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {getAllCatogory?.map((category) => (
+                    {filteredData?.map((category) => (
                         <div
                             key={category?._id}
                             className="bg-white/40 rounded-xl shadow-md border border-gray-200 p-6 w-full"

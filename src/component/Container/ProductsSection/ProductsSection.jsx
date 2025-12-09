@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MainLayout from "../../../common/MainLayout";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -26,8 +27,8 @@ import Image from "../../../common/Image";
 import CommonViewPopup from "../../../common/CommonViewPopup";
 
 const ProductsSection = () => {
-
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const [viewMode, setViewMode] = useState("grid");
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isUpdate, setIsUpdate] = useState(null);
@@ -134,8 +135,8 @@ const ProductsSection = () => {
     };
 
     const handleView = (product) => {
-        setViewData(product);
-        setIsViewOpen(true);
+        navigate(`/products/${product?.slug}`);
+
     };
 
     const formatPrice = (price) => {
@@ -330,7 +331,7 @@ const ProductsSection = () => {
 
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-bold text-gray-900">
-                                            {formatPrice(product?.price    || product?.variants?.[0]?.price)}
+                                            {formatPrice(product?.price || product?.variants?.[0]?.price)}
                                         </div>
                                         {product?.discountPrice && (
                                             <div className="text-sm text-gray-500 line-through">
@@ -473,27 +474,7 @@ const ProductsSection = () => {
                     </div>
                 )}
             </div>
-            <CommonViewPopup
-                isOpen={isViewOpen}
-                onClose={() => setIsViewOpen(false)}
-                title="Product Details"
-            >
-                {viewData && (
-                    <div className="space-y-4">
 
-                        <Image
-                            src={getProductImage(viewData)}
-                            className="w-full rounded-lg object-cover"
-                            alt={viewData?.name}
-                        />
-
-                        <h2 className="font-semibold text-lg">{viewData?.name}</h2>
-                        <p>Brand: {viewData?.brand?.name}</p>
-                        <p>Category: {viewData?.category?.name}</p>
-                        <p>Price: {formatPrice(viewData?.price)}</p>
-                    </div>
-                )}
-            </CommonViewPopup>
             {isDeletePopup && (
                 <ConfirmDeleteModal
                     isOpen={isDeletePopup}
