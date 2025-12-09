@@ -451,39 +451,11 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         placeholder="Slug"
                     />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Price </label>
-                        <input type="number" name="price" value={form?.price} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Discount Price</label>
-                        <input type="number" name="offerPrice" value={form?.offerPrice} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Weight</label>
-                        <input type="text" name="weight" value={form?.weight} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Brand *</label>
-                        <select name="brand" value={form?.brand} onChange={handleChange} required className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300">
-                            <option value="">Select Brand</option>
-                            {allBrands?.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Stock</label>
-                        <input type="number" name="stock" value={form?.stock} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                    </div>
-                </div>
                 <div>
                     <label className="block text-sm font-medium mb-1">Description</label>
                     <textarea name="description" value={form?.description} onChange={handleChange} rows={5} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300"></textarea>
                 </div>
-                <ImageUploadBox images={form?.images} onChange={handleMainImageChange} onRemove={handleRemoveMainImage} label="Main Product Images (Max 5)" />
-                <div className="flex justify-between items-center py-4 border-t  border-gray-300">
+                <div className="flex justify-between items-center py-4  border-gray-300">
                     <h3 className="text-xl font-semibold">
                         Product Variants {form.images.length > 0 ? "(Image selected, variants locked)" : "(Optional)"}
                     </h3>
@@ -502,6 +474,49 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         </div>
                     </label>
                 </div>
+                {
+                    !isShowVariant && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Price </label>
+                                <input type="number" name="price" value={form?.price} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Discount Price</label>
+                                <input type="number" name="offerPrice" value={form?.offerPrice} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Weight</label>
+                                <input type="text" name="weight" value={form?.weight} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                            </div>
+                        </div>
+                    )
+                }
+                {
+                    !isShowVariant && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <SingleSelectDropdown
+                                    label="Brand *"
+                                    options={allBrands}
+                                    value={form.brand}
+                                    onChange={(val) => setForm({ ...form, brand: val })}
+                                    searchable={true}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Stock</label>
+                                <input type="number" name="stock" value={form?.stock} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                            </div>
+                        </div>
+                    )
+                }
+                {
+                    !isShowVariant && (
+                        <ImageUploadBox images={form?.images} onChange={handleMainImageChange} onRemove={handleRemoveMainImage} label="Main Product Images (Max 5)" />
+
+                    )
+                }
                 {isShowVariant && (
                     <div className="space-y-8">
                         {form?.variants?.map((variant, index) => (

@@ -198,7 +198,7 @@ const ReportSection = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                         <div>
                             <SingleSelectDropdown
-                                label="Brands *"
+                                label="category"
                                 options={allSubCategories}
                                 value={filters.categoryId}
                                 onChange={(val) => handleFilterChange('categoryId', val)}
@@ -207,29 +207,12 @@ const ReportSection = () => {
                         </div>
                         <div>
                             <SingleSelectDropdown
-                                label="Brands *"
+                                label="Brands"
                                 options={allBrands}
                                 value={filters.brandId}
                                 onChange={(val) => handleFilterChange('brandId', val)}
                                 searchable={true}
                             />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Granularity
-                            </label>
-                            <select
-                                value={filters.granularity}
-                                onChange={(e) => handleFilterChange('granularity', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
-                            >
-                                <option value="">Auto</option>
-                                <option value="hourly">Hourly</option>
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly">Monthly</option>
-                                <option value="yearly">Yearly</option>
-                            </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
