@@ -102,7 +102,7 @@ const SubcategoriesSection = () => {
                                 </div>
                             </div>
                             <p className="text-gray-600 text-xs leading-relaxed font-normal text-left">
-                                {sub?.description.length > 90 ? sub?.description.substring(0, 90) + "…" : sub?.description}
+                                {sub?.description?.length > 90 ? sub?.description.substring(0, 90) + "…" : sub?.description}
                             </p>
                             <div className="flex items-center justify-between border-t border-gray-100 mt-3">
                                 <span className="text-gray-500 font-medium text-xs">Status:</span>
