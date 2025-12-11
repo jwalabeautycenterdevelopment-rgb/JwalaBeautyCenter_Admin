@@ -91,7 +91,7 @@ const AddSubCategori = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData
         dataToSend.append("status", formData.status);
 
         if (formData.subCategory instanceof File) {
-            dataToSend.append("subCategory", formData.subCategory);
+            dataToSend.append("subcategory", formData.subCategory);
         }
         if (upDateData) {
             dispatch(updateSubCategory({ id: upDateData.slug, formData: dataToSend }));
