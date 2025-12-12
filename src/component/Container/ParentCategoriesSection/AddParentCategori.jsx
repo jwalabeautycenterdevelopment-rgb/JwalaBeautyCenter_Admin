@@ -63,12 +63,6 @@ const AddParentCategori = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateD
         const { name, value } = e.target;
         if (name === "name") {
             const formattedName = value
-                .replace(/[^a-zA-Z0-9\s]/g, "")
-                .trim()
-                .split(/\s+/)
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                .join(" ");
-
             setFormData((prev) => ({
                 ...prev,
                 name: formattedName,

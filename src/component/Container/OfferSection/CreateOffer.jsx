@@ -40,22 +40,20 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
         previewImages: [],
     });
 
-    // Populate form when updating
     useEffect(() => {
         if (upDateData && allProducts.length) {
-            // Use actual product IDs for MultiSelectDropdown
             const selectedProductIds = upDateData.products?.map((p) => p.product) || [];
 
             setForm({
                 title: upDateData?.title || "",
                 description: upDateData?.description || "",
                 percentage: upDateData?.percentage || "",
-                products: selectedProductIds, // array of IDs
+                products: selectedProductIds,
                 startDate: upDateData?.startDate?.slice(0, 10) || "",
                 endDate: upDateData?.endDate?.slice(0, 10) || "",
                 status: upDateData?.status || 1,
-                offerImages: [], // new uploads
-                previewImages: upDateData?.offerPhoto || [], // existing images
+                offerImages: [],
+                previewImages: upDateData?.offerPhoto || [],
             });
         } else resetForm();
     }, [upDateData, allProducts]);
@@ -140,10 +138,8 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
         fd.append("endDate", form.endDate);
         fd.append("status", form.status);
 
-        // Backend expects array of objects { product: "id" }
         const productsArray = form.products.map((id) => ({ product: id }));
         fd.append("products", JSON.stringify(productsArray));
-
         form.offerImages.forEach((img) => fd.append("offerPhoto", img));
 
         if (upDateData) {
@@ -166,6 +162,24 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
             dispatch(clearOfferError());
         }
     }, [createOfferSuccessmsg, createOfferErrorsmsg, dispatch]);
+
+
+    const filteredProducts = allProducts?.filter((p) => {
+        const entered = Number(form.percentage);
+        if (!p.isVariant) {
+            return Number(p.discount) === entered;
+        }
+        if (p.isVariant && p.variants?.length) {
+            return p.variants.some((v) => {
+                if (!v.price || !v.offerPrice) return false;
+
+                const variantDiscount = ((v.price - v.offerPrice) / v.price) * 100;
+
+                return Math.round(variantDiscount) === entered;
+            });
+        }
+        return false;
+    });
 
     return (
         <CommonPopup
@@ -191,14 +205,6 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
                         className="w-full border p-2 rounded-md"
                     />
                 </div>
-                <MultiSelectDropdown
-                    label="Select Products"
-                    options={allProducts || []}
-                    selected={form.products} // now array of IDs
-                    multiple={true}
-                    onChange={handleProductsChange}
-                    searchable={true}
-                />
                 <InputField
                     type="number"
                     name="percentage"
@@ -206,6 +212,18 @@ const CreateOffer = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateData })
                     value={form.percentage}
                     onChange={handleChange}
                 />
+                {filteredProducts && filteredProducts?.length > 0 ? (
+                    <MultiSelectDropdown
+                        label="Select Products"
+                        options={filteredProducts}
+                        selected={form.products}
+                        multiple={true}
+                        onChange={handleProductsChange}
+                        searchable={true}
+                    />
+                ) : (
+                    <p className="text-red-500 text-sm mt-1">No products available</p>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                     <InputField type="date" name="startDate" value={form.startDate} onChange={handleChange} />
                     <InputField type="date" name="endDate" value={form.endDate} onChange={handleChange} />
