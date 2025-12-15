@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { fetchReport } from "../../../store/slice/reportSlice"
+import { jsPDF } from "jspdf";
+import { autoTable } from "jspdf-autotable";
+
 import {
     BarChart,
     Bar,
@@ -35,9 +38,11 @@ import Image from "../../../common/Image"
 import { getSubCategory } from "../../../store/slice/subCategorySlice"
 import { getBrands } from "../../../store/slice/brandsSlice"
 import SingleSelectDropdown from "../../../common/SingleSelectDropdown"
+import { useRef } from "react";
 
 const ReportSection = () => {
     const dispatch = useDispatch()
+    const pdfRef = useRef();
     const [filterType, setFilterType] = useState('month')
     const [showFilters, setShowFilters] = useState(false)
     const [filters, setFilters] = useState({
@@ -98,6 +103,103 @@ const ReportSection = () => {
         })
     }
 
+    const downloadPDF = () => {
+        const doc = new jsPDF("p", "pt", "a4");
+        let y = 40;
+
+        doc.setFontSize(20);
+        doc.text("Store Dashboard Report", 40, y);
+        y += 40;
+
+        doc.setFontSize(16);
+        doc.text("Store Overview", 40, y);
+        y += 20;
+
+        autoTable(doc, {
+            startY: y,
+            head: [[
+                "Total Revenue",
+                "Total Orders",
+                "Active Products",
+                "Active Categories",
+                "Active Sub Categories",
+                "Active Brands",
+                "Total Customers"
+            ]],
+            body: [[
+                `₹${data?.summary?.totalRevenue || 0}`,
+                data?.summary?.totalOrders || 0,
+                data?.summary?.activeProducts || 0,
+                data?.summary?.activeCategories || 0,
+                data?.summary?.activeSubCategories || 0,
+                data?.summary?.activeBrands || 0,
+                data?.summary?.totalCustomers || 0
+            ]],
+            theme: "grid",
+            styles: {
+                fontSize: 10,
+                cellPadding: 8,
+                halign: "center"
+            },
+            headStyles: {
+                fillColor: [59, 130, 246],
+                textColor: 255
+            }
+        });
+
+        y = doc.lastAutoTable.finalY + 40;
+
+        // ===== Best Selling Products Section =====
+        doc.setFontSize(16);
+        doc.text("Best Selling Products", 40, y);
+        y += 15;
+
+        const totalSold =
+            data?.bestSellingProducts?.reduce(
+                (sum, item) => sum + item.totalSold,
+                0
+            ) || 0;
+
+        doc.setFontSize(10);
+        doc.text(`Total Products Sold: ${totalSold}`, 40, y);
+        y += 15;
+
+        const tableData = (data?.bestSellingProducts || []).map(item => {
+            const productName = item.product?.name || "N/A";
+            const variantName =
+                item.product?.isVariant && item.product?.variants?.length > 0
+                    ? item.product.variants[0]?.name
+                    : null;
+
+            const displayName = variantName
+                ? `${productName} (${variantName})`
+                : productName;
+
+            return [
+                displayName,
+                item.totalSold || 0,
+                `₹${item.revenue || 0}`
+            ];
+        });
+
+        autoTable(doc, {
+            startY: y,
+            head: [["Product Name", "Sold", "Revenue"]],
+            body: tableData,
+            theme: "grid",
+            styles: { fontSize: 11, cellPadding: 6 },
+            columnStyles: {
+                0: { halign: "left" },
+                1: { halign: "center" },
+                2: { halign: "center" }
+            },
+            headStyles: { fillColor: [59, 130, 246], textColor: 255 }
+        });
+
+        doc.save("dashboard.pdf");
+    };
+
+
     const getProductImage = (product) => {
         if (product.productImages && product.productImages.length > 0) {
             return product.productImages[0]
@@ -145,13 +247,20 @@ const ReportSection = () => {
     }
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6" ref={pdfRef}>
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
                     <p className="text-gray-600">Overview of your store performance</p>
                 </div>
                 <div className="flex items-center gap-4">
+                    <button
+                        onClick={downloadPDF}
+                        className="px-4 py-2 bg-red-600 text-sm  cursor-pointer text-white rounded-lg hover:bg-red-700"
+                    >
+                        Export PDF
+                    </button>
+
                     <select
                         value={filterType}
                         onChange={(e) => setFilterType(e.target.value)}
