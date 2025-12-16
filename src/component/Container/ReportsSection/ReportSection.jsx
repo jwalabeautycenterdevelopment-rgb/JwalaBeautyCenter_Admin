@@ -127,7 +127,7 @@ const ReportSection = () => {
                 "Total Customers"
             ]],
             body: [[
-                `₹${data?.summary?.totalRevenue || 0}`,
+                `${data?.summary?.totalRevenue || 0}`,
                 data?.summary?.totalOrders || 0,
                 data?.summary?.activeProducts || 0,
                 data?.summary?.activeCategories || 0,
@@ -149,7 +149,6 @@ const ReportSection = () => {
 
         y = doc.lastAutoTable.finalY + 40;
 
-        // ===== Best Selling Products Section =====
         doc.setFontSize(16);
         doc.text("Best Selling Products", 40, y);
         y += 15;
@@ -178,7 +177,7 @@ const ReportSection = () => {
             return [
                 displayName,
                 item.totalSold || 0,
-                `₹${item.revenue || 0}`
+                `${item.revenue || 0}`
             ];
         });
 
@@ -229,7 +228,7 @@ const ReportSection = () => {
                     <p className="font-semibold text-gray-800">{label}</p>
                     {payload?.map((entry, index) => (
                         <p key={index} className="text-sm" style={{ color: entry.color }}>
-                            {entry.name}: {entry.name === 'revenue' ? `₹${entry.value}` : entry.value}
+                            {entry.name}: {entry.name === 'revenue' ? `${entry.value}` : entry.value}
                         </p>
                     ))}
                 </div>
@@ -443,8 +442,8 @@ const ReportSection = () => {
                                 <span className="text-green-600 text-sm">This month</span>
                             </div>
                         </div>
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                            <DollarSign className="h-8 w-8 text-blue-600" />
+                        <div className="p-3 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span className="text-blue-600 text-3xl font-bold">₹</span>
                         </div>
                     </div>
                 </div>
