@@ -12,7 +12,7 @@ import { getColorName } from "../../../utils/getColorName";
 import { slugify } from "../../../utils/slugify";
 import SingleSelectDropdown from "../../../common/SingleSelectDropdown";
 import { getPricePayload } from "../../../utils/getPricePercentage";
-import { bulkCreateProducts } from "../../../store/slice/productSlice";
+import { bulkCreateProducts, clearBulkCreateMsg, getProducts } from "../../../store/slice/productSlice";
 import BulkProductUploadModal from "./BulkProductUploadModal";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -24,6 +24,10 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const { allBrands } = useSelector((state) => state.brands);
     const { types, typeNamesById } = useSelector((state) => state.type);
     const [isShowVariant, setIsShowVariant] = useState(false);
+    const {
+        bulkCreateSuccessMsg,
+        bulkCreateErrorMsg
+    } = useSelector((state) => state.product);
 
     const [variantInput, setVariantInput] = useState({
         variantName: "",
@@ -349,23 +353,18 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
         ];
 
         for (let i = 2; i <= 500; i++) {
-            sheet.getCell(`B${i}`).dataValidation = {
-                type: "list",
-                allowBlank: true,
-                formulae: [
-                    `"${allSubCategories
-                        .map((c) => c.name)
-                        .join(",")}"`
-                ],
-            };
-
             sheet.getCell(`C${i}`).dataValidation = {
                 type: "list",
                 allowBlank: true,
                 formulae: [
-                    `"${allBrands
-                        .map((b) => b.name)
-                        .join(",")}"`
+                    `"${allSubCategories.map((c) => c.name).join(",")}"`
+                ],
+            };
+            sheet.getCell(`D${i}`).dataValidation = {
+                type: "list",
+                allowBlank: true,
+                formulae: [
+                    `"${allBrands.map((b) => b.name).join(",")}"`
                 ],
             };
         }
@@ -600,6 +599,23 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
             </div>
         );
     };
+
+    useEffect(() => {
+        if (bulkCreateSuccessMsg) {
+            successAlert(bulkCreateSuccessMsg);
+            setShowBulkModal(false);
+            setExcelFile(null);
+            setPreviewData([]);
+            dispatch(clearBulkCreateMsg())
+            backNavigation()
+            dispatch(getProducts());
+        }
+
+        if (bulkCreateErrorMsg) {
+            dispatch(clearBulkCreateMsg())
+            warningAlert(bulkCreateErrorMsg);
+        }
+    }, [bulkCreateSuccessMsg, bulkCreateErrorMsg]);
 
     return (
         <>

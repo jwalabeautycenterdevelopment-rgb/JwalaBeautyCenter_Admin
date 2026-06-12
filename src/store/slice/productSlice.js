@@ -216,7 +216,7 @@ const productSlice = createSlice({
         state.loadingDelete = false;
         state.deleteErrorMsg = action?.payload || "Failed to delete product";
       })
-      
+
       .addCase(bulkCreateProducts.pending, (state) => {
         state.loadingBulkCreate = true;
         state.bulkCreateSuccessMsg = null;
@@ -235,7 +235,11 @@ const productSlice = createSlice({
   },
 });
 
-export const { clearCreateMsg, clearUpdateMsg, clearDeleteMsg } =
-  productSlice.actions;
+export const {
+  clearCreateMsg,
+  clearUpdateMsg,
+  clearDeleteMsg,
+  clearBulkCreateMsg,
+} = productSlice.actions;
 
 export default productSlice.reducer;

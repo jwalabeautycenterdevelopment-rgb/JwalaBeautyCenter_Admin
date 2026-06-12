@@ -2,7 +2,7 @@ import { toast } from "react-toastify";
 
 export const successAlert = (message) => {
   toast.success(message, {
-    position: "top-right",
+    position: "bottom-right",
     autoClose: 3000,
     hideProgressBar: false,
     closeOnClick: true,
@@ -14,7 +14,7 @@ export const successAlert = (message) => {
 
 export const errorAlert = (message) => {
   toast.error(message, {
-    position: "top-right",
+    position: "bottom-right",
     autoClose: 4000,
     hideProgressBar: false,
     closeOnClick: true,
@@ -26,7 +26,7 @@ export const errorAlert = (message) => {
 
 export const infoAlert = (message) => {
   toast.info(message, {
-    position: "top-right",
+    position: "bottom-right",
     autoClose: 3000,
     theme: "colored",
   });
@@ -34,7 +34,7 @@ export const infoAlert = (message) => {
 
 export const warningAlert = (message) => {
   toast.warning(message, {
-    position: "top-right",
+    position: "bottom-right",
     autoClose: 3000,
     theme: "colored",
   });
