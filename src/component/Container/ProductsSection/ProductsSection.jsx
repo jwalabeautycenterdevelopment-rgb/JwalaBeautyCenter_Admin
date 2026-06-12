@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import MainLayout from "../../../common/MainLayout";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,7 +9,11 @@ import {
     FaTh,
     FaList,
     FaBox,
-    FaPlus
+    FaPlus,
+    FaFileExcel,
+    FaDownload,
+    FaFileUpload,
+    FaTimes
 } from "react-icons/fa";
 import {
     clearCreateMsg,
@@ -20,11 +24,233 @@ import {
     getProducts,
     deleteProduct
 } from "../../../store/slice/productSlice";
+import { getSubCategory } from "../../../store/slice/subCategorySlice";
+import { getBrands } from "../../../store/slice/brandsSlice";
 import { errorAlert, successAlert } from "../../../utils/alertService";
 import ProductForm from "./CreateProducts";
 import ConfirmDeleteModal from "../../../common/CommonDeleteModel";
 import Image from "../../../common/Image";
 import CommonViewPopup from "../../../common/CommonViewPopup";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+
+const STATUS_OPTIONS = ["In Stock", "Out of Stock"];
+const YES_NO_OPTIONS = ["Yes", "No"];
+
+/**
+ * Human-readable export for viewing/reporting only.
+ * NOT compatible with the bulk-import parser — column headers are
+ * display labels, not the field keys handleBulkUpload expects.
+ */
+const exportProductsToExcel = async (products, fileName, categories = [], brands = []) => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Products");
+    const lookupSheet = workbook.addWorksheet("Lookups");
+    lookupSheet.state = "hidden";
+
+    sheet.columns = [
+        { header: "Product Name", key: "name", width: 35 },
+        { header: "SKU", key: "sku", width: 18 },
+        { header: "Category", key: "category", width: 22 },
+        { header: "Brand", key: "brand", width: 22 },
+        { header: "Price", key: "price", width: 14 },
+        { header: "Offer Price", key: "offerPrice", width: 14 },
+        { header: "Stock", key: "stock", width: 12 },
+        { header: "Status", key: "status", width: 16 },
+        { header: "Best Seller", key: "isBestSeller", width: 14 },
+        { header: "New Arrival", key: "isNewArrival", width: 14 },
+    ];
+
+    sheet.getRow(1).font = { bold: true };
+    sheet.getRow(1).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE9D5FF" },
+    };
+
+    const categoryNames = categories.map((c) => c?.name).filter(Boolean);
+    const brandNames = brands.map((b) => b?.name).filter(Boolean);
+
+    lookupSheet.columns = [
+        { header: "Category", key: "category", width: 25 },
+        { header: "Brand", key: "brand", width: 25 },
+        { header: "Status", key: "status", width: 18 },
+        { header: "YesNo", key: "yesno", width: 10 },
+    ];
+
+    const maxLookupRows = Math.max(
+        categoryNames.length,
+        brandNames.length,
+        STATUS_OPTIONS.length,
+        YES_NO_OPTIONS.length,
+        1
+    );
+
+    for (let i = 0; i < maxLookupRows; i++) {
+        lookupSheet.addRow({
+            category: categoryNames[i] || null,
+            brand: brandNames[i] || null,
+            status: STATUS_OPTIONS[i] || null,
+            yesno: YES_NO_OPTIONS[i] || null,
+        });
+    }
+
+    products.forEach((product) => {
+        const price = product?.price ?? product?.variants?.[0]?.price ?? 0;
+        const offerPrice =
+            product?.discountPrice ?? product?.variants?.[0]?.discountPrice ?? "";
+        const stock = product?.stock ?? product?.variants?.[0]?.stock ?? 0;
+
+        sheet.addRow({
+            name: product?.name || "",
+            sku: product?.sku || "N/A",
+            category: product?.category?.name || "",
+            brand: product?.brand?.name || "",
+            price,
+            offerPrice,
+            stock,
+            status: stock > 0 ? "In Stock" : "Out of Stock",
+            isBestSeller: product?.isBestSeller ? "Yes" : "No",
+            isNewArrival: product?.isNewArrival ? "Yes" : "No",
+        });
+    });
+
+    const lastRow = sheet.rowCount;
+
+    for (let i = 2; i <= lastRow; i++) {
+        if (categoryNames.length > 0) {
+            sheet.getCell(`C${i}`).dataValidation = {
+                type: "list",
+                allowBlank: true,
+                formulae: [`Lookups!$A$2:$A$${categoryNames.length + 1}`],
+            };
+        }
+        if (brandNames.length > 0) {
+            sheet.getCell(`D${i}`).dataValidation = {
+                type: "list",
+                allowBlank: true,
+                formulae: [`Lookups!$B$2:$B$${brandNames.length + 1}`],
+            };
+        }
+        sheet.getCell(`H${i}`).dataValidation = {
+            type: "list",
+            allowBlank: true,
+            formulae: [`Lookups!$C$2:$C$${STATUS_OPTIONS.length + 1}`],
+        };
+        sheet.getCell(`I${i}`).dataValidation = {
+            type: "list",
+            allowBlank: true,
+            formulae: [`Lookups!$D$2:$D$${YES_NO_OPTIONS.length + 1}`],
+        };
+        sheet.getCell(`J${i}`).dataValidation = {
+            type: "list",
+            allowBlank: true,
+            formulae: [`Lookups!$D$2:$D$${YES_NO_OPTIONS.length + 1}`],
+        };
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), fileName);
+};
+
+/**
+ * Re-import-compatible export. Column KEYS match exactly what
+ * handleBulkUpload (in CreateProducts.jsx) expects: name, slug, category,
+ * brand, description, price, offerPrice, stock, weight, tags, keywords,
+ * metaTitle, metaDescription, canonicalTag, isBestSeller, isNewArrival,
+ * status, variants.
+ *
+ * This file can be edited and re-uploaded via the Bulk Upload modal.
+ * Note: existing variants are NOT serialized into the "variants" column
+ * (variant images cannot round-trip through Excel) — edit variant
+ * products via the product form instead.
+ */
+const exportProductsForReimport = async (products, fileName, categories = [], brands = []) => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Products");
+    const categorySheet = workbook.addWorksheet("Categories");
+    const brandSheet = workbook.addWorksheet("Brands");
+
+    const categoryNames = categories.map((c) => c?.name).filter(Boolean);
+    const brandNames = brands.map((b) => b?.name).filter(Boolean);
+
+    categoryNames.forEach((name) => categorySheet.addRow([name]));
+    brandNames.forEach((name) => brandSheet.addRow([name]));
+
+    sheet.columns = [
+        { header: "name", key: "name", width: 30 },
+        { header: "slug", key: "slug", width: 30 },
+        { header: "category", key: "category", width: 25 },
+        { header: "brand", key: "brand", width: 25 },
+        { header: "description", key: "description", width: 50 },
+        { header: "price", key: "price", width: 15 },
+        { header: "offerPrice", key: "offerPrice", width: 15 },
+        { header: "stock", key: "stock", width: 15 },
+        { header: "weight", key: "weight", width: 15 },
+        { header: "tags", key: "tags", width: 30 },
+        { header: "keywords", key: "keywords", width: 40 },
+        { header: "metaTitle", key: "metaTitle", width: 40 },
+        { header: "metaDescription", key: "metaDescription", width: 60 },
+        { header: "canonicalTag", key: "canonicalTag", width: 50 },
+        { header: "isBestSeller", key: "isBestSeller", width: 20 },
+        { header: "isNewArrival", key: "isNewArrival", width: 20 },
+        { header: "status", key: "status", width: 15 },
+        { header: "variants", key: "variants", width: 80 },
+    ];
+
+    sheet.getRow(1).font = { bold: true };
+    sheet.getRow(1).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE9D5FF" },
+    };
+
+    products.forEach((product) => {
+        const primaryVariant = product?.variants?.[0];
+
+        sheet.addRow({
+            name: product?.name ?? "",
+            slug: product?.slug ?? "",
+            category: product?.category?.name ?? "",
+            brand: product?.brand?.name ?? "",
+            description: product?.description ?? "",
+            price: product?.price ?? primaryVariant?.price ?? 0,
+            offerPrice: product?.discountPrice ?? primaryVariant?.discountPrice ?? 0,
+            stock: product?.stock ?? primaryVariant?.stock ?? 0,
+            weight: product?.weight ?? "",
+            tags: Array.isArray(product?.tags) ? product.tags.join(", ") : "",
+            keywords: Array.isArray(product?.keywords) ? product.keywords.join(", ") : "",
+            metaTitle: product?.metaTitle ?? "",
+            metaDescription: product?.metaDescription ?? "",
+            canonicalTag: product?.canonicalTag ?? "",
+            isBestSeller: product?.isBestSeller ? "true" : "false",
+            isNewArrival: product?.isNewArrival ? "true" : "false",
+            status: 1,
+            variants: "", // intentionally blank — see note above
+        });
+    });
+
+    const lastRow = sheet.rowCount;
+    for (let i = 2; i <= lastRow; i++) {
+        if (categoryNames.length > 0) {
+            sheet.getCell(`C${i}`).dataValidation = {
+                type: "list",
+                allowBlank: true,
+                formulae: [`"${categoryNames.join(",")}"`],
+            };
+        }
+        if (brandNames.length > 0) {
+            sheet.getCell(`D${i}`).dataValidation = {
+                type: "list",
+                allowBlank: true,
+                formulae: [`"${brandNames.join(",")}"`],
+            };
+        }
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), fileName);
+};
 
 const ProductsSection = () => {
     const dispatch = useDispatch();
@@ -39,6 +265,12 @@ const ProductsSection = () => {
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [viewData, setViewData] = useState(null);
 
+    const [selectedIds, setSelectedIds] = useState(new Set());
+    const [isBulkDeletePopup, setIsBulkDeletePopup] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isExportingReimport, setIsExportingReimport] = useState(false);
+
     const {
         allProducts,
         loadingGet: loading,
@@ -51,8 +283,13 @@ const ProductsSection = () => {
         deleteErrorMsg,
     } = useSelector((state) => state.product);
 
+    const { allSubCategories } = useSelector((state) => state.subcategory);
+    const { allBrands } = useSelector((state) => state.brands);
+
     useEffect(() => {
         dispatch(getProducts());
+        dispatch(getSubCategory());
+        dispatch(getBrands());
     }, []);
 
     useEffect(() => {
@@ -136,14 +373,13 @@ const ProductsSection = () => {
 
     const handleView = (product) => {
         navigate(`/products/${product?.slug}`);
-
     };
 
     const formatPrice = (price) => {
         return new Intl.NumberFormat("en-IN", {
             style: "currency",
             currency: "INR",
-        }).format(price);
+        }).format(price || 0);
     };
 
     const filteredProducts = allProducts?.filter((product) =>
@@ -161,6 +397,167 @@ const ProductsSection = () => {
         return null;
     };
 
+    const isAllSelected =
+        filteredProducts?.length > 0 &&
+        filteredProducts.every((p) => selectedIds.has(p?._id));
+
+    const isSomeSelected =
+        filteredProducts?.some((p) => selectedIds.has(p?._id)) && !isAllSelected;
+
+    const handleToggleSelectAll = useCallback(() => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            const allCurrentlySelected = filteredProducts?.every((p) =>
+                next.has(p?._id)
+            );
+
+            if (allCurrentlySelected) {
+                filteredProducts?.forEach((p) => next.delete(p?._id));
+            } else {
+                filteredProducts?.forEach((p) => next.add(p?._id));
+            }
+            return next;
+        });
+    }, [filteredProducts]);
+
+    const handleToggleSelectOne = useCallback((productId) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(productId)) {
+                next.delete(productId);
+            } else {
+                next.add(productId);
+            }
+            return next;
+        });
+    }, []);
+
+    const handleClearSelection = useCallback(() => {
+        setSelectedIds(new Set());
+    }, []);
+
+    useEffect(() => {
+        if (!allProducts?.length) return;
+        setSelectedIds((prev) => {
+            if (prev.size === 0) return prev;
+            const validIds = new Set(allProducts.map((p) => p?._id));
+            let changed = false;
+            const next = new Set();
+            prev.forEach((id) => {
+                if (validIds.has(id)) {
+                    next.add(id);
+                } else {
+                    changed = true;
+                }
+            });
+            return changed ? next : prev;
+        });
+    }, [allProducts]);
+
+    const selectedProducts = useMemo(
+        () => allProducts?.filter((p) => selectedIds.has(p?._id)) || [],
+        [allProducts, selectedIds]
+    );
+
+    const handleExportSelected = async () => {
+        if (selectedProducts.length === 0) return;
+        setIsExporting(true);
+        try {
+            await exportProductsToExcel(
+                selectedProducts,
+                `Selected_Products_${Date.now()}.xlsx`,
+                allSubCategories,
+                allBrands
+            );
+        } catch (err) {
+            console.error("Export failed:", err);
+            errorAlert("Failed to export selected products.");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleExportAll = async () => {
+        if (!filteredProducts?.length) {
+            return errorAlert("No products available to export.");
+        }
+        setIsExporting(true);
+        try {
+            await exportProductsToExcel(
+                filteredProducts,
+                `All_Products_${Date.now()}.xlsx`,
+                allSubCategories,
+                allBrands
+            );
+        } catch (err) {
+            console.error("Export failed:", err);
+            errorAlert("Failed to export products.");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    /**
+     * Exports the currently selected (or all, if none selected) products
+     * in a schema that matches the bulk-import template exactly, so the
+     * result can be edited and re-uploaded via Bulk Upload.
+     */
+    const handleExportForReimport = async () => {
+        const source = selectedProducts.length > 0 ? selectedProducts : filteredProducts;
+        if (!source?.length) {
+            return errorAlert("No products available to export.");
+        }
+        setIsExportingReimport(true);
+        try {
+            await exportProductsForReimport(
+                source,
+                `Products_Bulk_Edit_${Date.now()}.xlsx`,
+                allSubCategories,
+                allBrands
+            );
+        } catch (err) {
+            console.error("Export failed:", err);
+            errorAlert("Failed to export products for bulk edit.");
+        } finally {
+            setIsExportingReimport(false);
+        }
+    };
+
+    const handleBulkDeleteClick = () => {
+        if (selectedIds.size === 0) return;
+        setIsBulkDeletePopup(true);
+    };
+
+    const confirmBulkDelete = async () => {
+        const ids = Array.from(selectedIds);
+        if (ids.length === 0) {
+            setIsBulkDeletePopup(false);
+            return;
+        }
+        setIsBulkDeleting(true);
+        try {
+            const results = await Promise.allSettled(
+                ids.map((id) => dispatch(deleteProduct(id)).unwrap?.() ?? dispatch(deleteProduct(id)))
+            );
+            const failedCount = results.filter((r) => r.status === "rejected").length;
+            const successCount = ids.length - failedCount;
+            if (successCount > 0) {
+                successAlert(`${successCount} product(s) deleted successfully.`);
+            }
+            if (failedCount > 0) {
+                errorAlert(`${failedCount} product(s) failed to delete.`);
+            }
+            dispatch(getProducts());
+            setSelectedIds(new Set());
+        } catch (err) {
+            console.error("Bulk delete failed:", err);
+            errorAlert("Failed to delete selected products.");
+        } finally {
+            setIsBulkDeleting(false);
+            setIsBulkDeletePopup(false);
+        }
+    };
+
     const GridView = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts?.map((product) => {
@@ -172,7 +569,6 @@ const ProductsSection = () => {
                         className="group relative bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200"
                     >
                         <div className="relative h-48 bg-gray-100 overflow-hidden">
-
                             {img ? (
                                 <Image
                                     src={img}
@@ -205,7 +601,7 @@ const ProductsSection = () => {
                                 </button>
                                 <button
                                     onClick={() => handleUpdate(product)}
-                                    className="bg-black text-white p-2 rounded-full  transition-colors shadow-lg"
+                                    className="bg-black text-white p-2 rounded-full transition-colors shadow-lg"
                                 >
                                     <FaEdit size={14} />
                                 </button>
@@ -218,10 +614,7 @@ const ProductsSection = () => {
                             </div>
                         </div>
                         <div className="p-4">
-                            <Link
-                                className="hover:underline"
-                                to={`/products/${product?.slug}`}
-                            >
+                            <Link className="hover:underline" to={`/products/${product?.slug}`}>
                                 <h3 className="font-semibold text-gray-800 mb-2 line-clamp-2 h-6">
                                     {product?.name}
                                 </h3>
@@ -231,7 +624,6 @@ const ProductsSection = () => {
                                     <span className="text-lg font-bold text-gray-900">
                                         {formatPrice(product?.price || product?.variants?.[0]?.price)}
                                     </span>
-
                                     {product?.discountPrice &&
                                         product?.discountPrice < product?.price && (
                                             <span className="text-sm text-gray-500 line-through">
@@ -240,7 +632,6 @@ const ProductsSection = () => {
                                         )}
                                 </div>
                             </div>
-
                             <div className="text-sm text-gray-600 space-y-1">
                                 <p>Brand: {product?.brand?.name}</p>
                                 <p>SKU: {product?.sku || "N/A"}</p>
@@ -253,23 +644,17 @@ const ProductsSection = () => {
                                 >
                                     Stock: {product?.variants?.[0]?.stock || product?.stock}
                                 </p>
-
                                 {product?.category && (
                                     <p>Category: {product?.category?.name}</p>
                                 )}
                             </div>
-
                             {product?.tags && product?.tags.length > 0 && (
                                 <div className="mt-2 flex flex-wrap gap-1">
                                     {product?.tags.slice(0, 3).map((tag, i) => (
-                                        <span
-                                            key={i}
-                                            className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
-                                        >
+                                        <span key={i} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
                                             {tag}
                                         </span>
                                     ))}
-
                                     {product?.tags.length > 3 && (
                                         <span className="text-xs text-gray-500">
                                             +{product?.tags.length - 3} more
@@ -290,6 +675,18 @@ const ProductsSection = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
+                            <th className="px-4 py-3 text-left w-12">
+                                <input
+                                    type="checkbox"
+                                    className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500 cursor-pointer"
+                                    checked={isAllSelected}
+                                    ref={(el) => {
+                                        if (el) el.indeterminate = isSomeSelected;
+                                    }}
+                                    onChange={handleToggleSelectAll}
+                                    aria-label="Select all products"
+                                />
+                            </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Brand</th>
@@ -298,16 +695,28 @@ const ProductsSection = () => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-
                     <tbody className="bg-white divide-y divide-gray-200">
                         {filteredProducts?.map((product) => {
                             const img = getProductImage(product);
+                            const isSelected = selectedIds.has(product?._id);
 
                             return (
-                                <tr key={product?._id} className="hover:bg-gray-50 transition-colors">
+                                <tr
+                                    key={product?._id}
+                                    className={`transition-colors ${isSelected ? "bg-pink-50 hover:bg-pink-100" : "hover:bg-gray-50"}`}
+                                >
+                                    <td className="px-4 py-4 whitespace-nowrap">
+                                        <input
+                                            type="checkbox"
+                                            className="h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-500 cursor-pointer"
+                                            checked={isSelected}
+                                            onChange={() => handleToggleSelectOne(product?._id)}
+                                            aria-label={`Select ${product?.name}`}
+                                        />
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <div className="h-10 w-10 ">
+                                            <div className="h-10 w-10">
                                                 {img ? (
                                                     <Image
                                                         className="h-10 w-10 rounded object-cover"
@@ -320,11 +729,8 @@ const ProductsSection = () => {
                                                     </div>
                                                 )}
                                             </div>
-
                                             <div className="ml-4">
-                                                <Link
-                                                    className="hover:underline"
-                                                    to={`/products/${product?.slug}`}>
+                                                <Link className="hover:underline" to={`/products/${product?.slug}`}>
                                                     <div className="text-sm font-medium text-gray-900">
                                                         {product?.name?.length > 90
                                                             ? product?.name.substring(0, 90) + "…"
@@ -335,7 +741,6 @@ const ProductsSection = () => {
                                             </div>
                                         </div>
                                     </td>
-
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm font-bold text-gray-900">
                                             {formatPrice(product?.price || product?.variants?.[0]?.price)}
@@ -346,11 +751,9 @@ const ProductsSection = () => {
                                             </div>
                                         )}
                                     </td>
-
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {product?.brand?.name}
                                     </td>
-
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span
                                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${(product?.stock || product?.variants?.[0]?.stock) > 10
@@ -363,7 +766,6 @@ const ProductsSection = () => {
                                             {product?.stock || product?.variants?.[0]?.stock || 0} in stock
                                         </span>
                                     </td>
-
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex gap-1">
                                             {product?.isBestSeller && (
@@ -378,7 +780,6 @@ const ProductsSection = () => {
                                             )}
                                         </div>
                                     </td>
-
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex space-x-2">
                                             <button
@@ -410,6 +811,53 @@ const ProductsSection = () => {
         </div>
     );
 
+    const BulkActionToolbar = () => {
+        if (selectedIds.size === 0) return null;
+
+        return (
+            <div className="sticky top-0 z-20 mb-4 bg-gray-700 text-white rounded-lg shadow-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <span className="font-semibold text-sm sm:text-base">
+                        {selectedIds.size} product{selectedIds.size > 1 ? "s" : ""} selected
+                    </span>
+                    <button
+                        onClick={handleClearSelection}
+                        className="flex items-center gap-1 text-xs sm:text-sm bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-md transition-colors cursor-pointer"
+                    >
+                        <FaTimes size={12} />
+                        Clear Selection
+                    </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        onClick={handleExportSelected}
+                        disabled={isExporting}
+                        className="flex items-center gap-2 text-sm bg-white text-slate-800 font-medium px-4 py-2 rounded-md hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                        <FaFileExcel size={14} />
+                        {isExporting ? "Exporting..." : "Export Selected"}
+                    </button>
+                    <button
+                        onClick={handleExportForReimport}
+                        disabled={isExportingReimport}
+                        className="flex items-center gap-2 text-sm bg-white text-slate-800 font-medium px-4 py-2 rounded-md hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                        <FaFileUpload size={14} />
+                        {isExportingReimport ? "Exporting..." : "Export for Bulk Edit"}
+                    </button>
+                    <button
+                        onClick={handleBulkDeleteClick}
+                        disabled={isBulkDeleting}
+                        className="flex items-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 font-medium px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                        <FaTrash size={14} />
+                        {isBulkDeleting ? "Deleting..." : "Delete Selected"}
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
     if (isFormOpen) {
         return (
             <ProductForm
@@ -430,7 +878,24 @@ const ProductsSection = () => {
             Inputvalue={search}
             InputOnChange={setSearch}
         >
-            <div className="flex items-center justify-end gap-4 w-full sm:w-auto">
+            <div className="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto">
+                <button
+                    onClick={handleExportForReimport}
+                    disabled={isExportingReimport || !filteredProducts?.length}
+                    className="flex items-center gap-2 text-sm bg-black/90 text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    title="Export products in a format that can be edited and re-uploaded via Bulk Upload"
+                >
+                    <FaFileUpload size={14} />
+                    {isExportingReimport ? "Exporting..." : "Export for Bulk Edit"}
+                </button>
+                <button
+                    onClick={handleExportAll}
+                    disabled={isExporting || !filteredProducts?.length}
+                    className="flex items-center gap-2 text-sm bg-black/90 text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                    <FaDownload size={14} />
+                    {isExporting ? "Exporting..." : "Export All Products"}
+                </button>
                 <div className="flex bg-gray-100 rounded-lg p-1">
                     <button
                         onClick={() => setViewMode("grid")}
@@ -452,7 +917,10 @@ const ProductsSection = () => {
                     </button>
                 </div>
             </div>
+
             <div className="mt-6">
+                {viewMode === "list" && <BulkActionToolbar />}
+
                 {loading ? (
                     <div className="text-center py-12">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -488,6 +956,16 @@ const ProductsSection = () => {
                     title="Are you sure you want to delete this product?"
                     onConfirm={confirmDeleteProduct}
                     onCancel={() => setIsDeletePopup(false)}
+                />
+            )}
+
+            {isBulkDeletePopup && (
+                <ConfirmDeleteModal
+                    isOpen={isBulkDeletePopup}
+                    title={`Are you sure you want to delete ${selectedIds.size} selected product${selectedIds.size > 1 ? "s" : ""}? This action cannot be undone.`}
+                    onConfirm={confirmBulkDelete}
+                    onCancel={() => setIsBulkDeletePopup(false)}
+                    loading={isBulkDeleting}
                 />
             )}
         </MainLayout>

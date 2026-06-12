@@ -57,7 +57,7 @@ const ProductDetails = ({ slug }) => {
                             </Link>
                             <div>
                                 <span className="text-sm text-gray-500">Product ID</span>
-                                <span className="font-mono text-sm font-semibold">{singleProduct?._id || "N/A"}</span>
+                                <span className="font-mono text-sm font-semibold"> {singleProduct?._id || "N/A"}</span>
                             </div>
                         </div>
                         <div className="flex flex-col">
