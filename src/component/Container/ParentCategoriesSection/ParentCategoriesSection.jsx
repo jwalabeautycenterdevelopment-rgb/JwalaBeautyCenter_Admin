@@ -75,11 +75,11 @@ const ParentCategoriesSection = () => {
 
         >
             <section className="my-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {filteredData?.map((category) => (
                         <div
                             key={category?._id}
-                            className="bg-white/40 rounded-xl shadow-md border border-gray-200 p-6 w-full"
+                            className="bg-white/40 rounded-xl shadow-md border border-gray-200 p-5 w-full"
                         >
                             <Image
                                 src={category?.image}
@@ -98,15 +98,17 @@ const ParentCategoriesSection = () => {
                                         <FiEdit size={18} />
                                     </button>
                                     <button
-                                        className=" text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 cursor-pointer"
+                                        className="hover:bg-red-50 rounded-lg transition-colors duration-200 cursor-pointer"
                                         onClick={() => handleDeleteClick(category?._id)}
                                     >
                                         <FiTrash2 size={18} />
                                     </button>
                                 </div>
                             </div>
-                            <p className="text-gray-600 text-xs leading-relaxed font-normal text-left">
-                                {category?.description.length > 90 ? category?.description.substring(0, 90) + "…" : category?.description}
+                            <p className="text-gray-600 text-sm  font-normal text-left">
+                                {(category?.description || "").length > 90
+                                    ? category.description.slice(0, 90) + "…"
+                                    : category?.description || ""}
                             </p>
                             <div className="flex items-center justify-between border-t border-gray-100 mt-3">
                                 <span className="text-gray-500 font-medium text-xs">Status:</span>

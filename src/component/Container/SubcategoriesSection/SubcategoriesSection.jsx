@@ -70,11 +70,11 @@ const SubcategoriesSection = () => {
 
         >
             <section className="my-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     {filteredData?.map((sub) => (
                         <div
                             key={sub?._id}
-                            className="bg-white/40 rounded-xl shadow-lg border border-gray-200 p-6 w-full"
+                            className="bg-white/40 rounded-xl shadow-lg border border-gray-200 p-5 w-full"
                         >
                             <Image
                                 src={sub?.image}
@@ -82,7 +82,7 @@ const SubcategoriesSection = () => {
                                 className="my-3 w-full h-[200px]"
 
                             />
-                            <span className="text-xs text-pink-300 ">{sub?.category?.name}</span>
+                            <span className="text-xs  ">{sub?.category?.name}</span>
                             <div className="flex justify-between items-start">
                                 <h1 className="text-md font-semibold capitalize text-gray-800 tracking-wide">
                                     {sub?.name.length > 90 ? sub?.name.substring(0, 90) + "…" : sub?.name}
@@ -94,14 +94,14 @@ const SubcategoriesSection = () => {
                                         <FiEdit size={15} />
                                     </button>
                                     <button
-                                        className=" text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 cursor-pointer"
+                                        className="  hover:bg-red-50 rounded-lg transition-colors duration-200 cursor-pointer"
                                         onClick={() => handleDeleteClick(sub?._id)}
                                     >
                                         <FiTrash2 size={15} />
                                     </button>
                                 </div>
                             </div>
-                            <p className="text-gray-600 text-xs leading-relaxed font-normal text-left">
+                            <p className="text-gray-600 text-sm font-normal text-left">
                                 {sub?.description?.length > 90 ? sub?.description.substring(0, 90) + "…" : sub?.description}
                             </p>
                             <div className="flex items-center justify-between border-t border-gray-100 mt-3">

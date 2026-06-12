@@ -87,7 +87,7 @@ const BrandSection = () => {
 
         >
             <section className="my-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {filteredBrands?.map((brand) => (
                         <div
                             key={brand?._id}
@@ -124,19 +124,20 @@ const BrandSection = () => {
                                     </div>
                                 </div>
                             </div>
-                            <p className="text-gray-600 text-sm leading-relaxed font-normal my-2">
-                                {brand?.description}
-                            </p>
+
                             {brand?.logo && (
                                 <div className="my-3">
                                     <Image
                                         src={brand?.logo}
                                         alt={brand?.name}
-                                        className="w-24 h-24 object-contain rounded-lg mx-auto"
+                                        className="w-60 h-40 object-cover rounded-lg "
                                     />
                                 </div>
                             )}
-                            <div className="flex items-center justify-between border-t border-gray-100 mt-3 pt-2">
+                            <p className="text-gray-600 text-sm leading-relaxed font-normal">
+                                {brand?.description}
+                            </p>
+                            <div className="flex items-center justify-between  ">
                                 <span className="text-gray-500 font-medium text-sm">Status:</span>
                                 <span
                                     className={`px-4 py-1 rounded-full font-semibold text-xs text-center ${brand?.status === 1

@@ -22,7 +22,7 @@ import { FaGift, FaUserCheck } from "react-icons/fa";
 const Sidebar = () => {
     const [openCatalog, setOpenCatalog] = useState(true);
     return (
-        <aside className="h-screen bg-white shadow-md flex flex-col border-r border-gray-300">
+        <aside className="h-screen bg-white shadow-md flex flex-col   border-r border-gray-300">
             <div className="flex items-center h-16 border-b border-gray-200 px-4">
                 <img src={logo} alt="Logo" className="h-10 w-auto" />
             </div>
@@ -31,7 +31,7 @@ const Sidebar = () => {
                     <NavLink
                         to="/"
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-200 transition 
+                            `flex items-center gap-3 px-3 py-2 text-md rounded-md text-gray-700 hover:bg-gray-200 transition 
                             ${isActive ? "bg-[#dfabb3] text-white" : ""}`
                         }
                     >
@@ -41,7 +41,7 @@ const Sidebar = () => {
                     <NavLink
                         to="/banner"
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-200 
+                            `flex items-center gap-3 px-3 py-2 text-md rounded-md text-gray-700 hover:bg-gray-200 
                             ${isActive ? "bg-[#dfabb3] text-white" : ""}`
                         }
                     >
@@ -50,7 +50,7 @@ const Sidebar = () => {
                     </NavLink>
                     <button
                         onClick={() => setOpenCatalog(!openCatalog)}
-                        className="flex items-center justify-between w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded-md"
+                        className="flex items-center justify-between w-full px-3 py-2 text-md text-gray-700 hover:bg-gray-200 rounded-md"
                     >
                         <div className="flex items-center gap-3">
                             <LuFolder className="text-xl" />
@@ -65,8 +65,8 @@ const Sidebar = () => {
                             <NavLink
                                 to="/parent-categories"
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-orange-600 
-                                    ${isActive ? "text-orange-600 font-medium" : ""}`
+                                    `flex items-center gap-3 px-3 py-2 text-md text-gray-700 hover:text-orange-600 
+                                    ${isActive ? "text-orange-600 font-semibold" : ""}`
                                 }
                             >
                                 <LuFolders className="text-lg" />
@@ -75,18 +75,28 @@ const Sidebar = () => {
                             <NavLink
                                 to="/subcategories"
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-orange-600 
-                                    ${isActive ? "text-orange-600 font-medium" : ""}`
+                                    `flex items-center gap-3 px-3 py-2 text-md text-gray-700 hover:text-orange-600 
+                                    ${isActive ? "text-orange-600 font-semibold" : ""}`
                                 }
                             >
                                 <LuGitBranch className="text-lg" />
                                 Subcategories
                             </NavLink>
                             <NavLink
+                                to="/brands"
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 px-3 py-2 text-md text-gray-700 hover:text-orange-600 
+                                    ${isActive ? "text-orange-600 font-semibold" : ""}`
+                                }
+                            >
+                                <LuTag className="text-xl" />
+                                Brands
+                            </NavLink>
+                            <NavLink
                                 to="/products"
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-orange-600 
-                                    ${isActive ? "text-orange-600 font-medium" : ""}`
+                                    `flex items-center gap-3 px-3 py-2 text-md text-gray-700 hover:text-orange-600 
+                                    ${isActive ? "text-orange-600 font-semibold" : ""}`
                                 }
                             >
                                 <LuPackage className="text-lg" />
@@ -96,7 +106,7 @@ const Sidebar = () => {
                     )}
                     {/* <button
                         onClick={() => setOpenType(!openType)}
-                        className="flex items-center justify-between w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-200 rounded-md"
+                        className="flex items-center justify-between w-full px-3 py-2 text-md text-gray-700 hover:bg-gray-200 rounded-md"
                     >
                         <div className="flex items-center gap-3">
                             <LuTag className="text-xl" />
@@ -112,8 +122,8 @@ const Sidebar = () => {
                             <NavLink
                                 to="/type"
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-orange-600 
-                                    ${isActive ? "text-orange-600 font-medium" : ""}`
+                                    `flex items-center gap-3 px-3 py-2 text-md text-gray-700 hover:text-orange-600 
+                                    ${isActive ? "text-orange-600 font-semibold" : ""}`
                                 }
                             >
                                 <LuFolder className="text-lg" />
@@ -122,8 +132,8 @@ const Sidebar = () => {
                             <NavLink
                                 to="/typename"
                                 className={({ isActive }) =>
-                                    `flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:text-orange-600 
-                                    ${isActive ? "text-orange-600 font-medium" : ""}`
+                                    `flex items-center gap-3 px-3 py-2 text-md text-gray-700 hover:text-orange-600 
+                                    ${isActive ? "text-orange-600 font-semibold" : ""}`
                                 }
                             >
                                 <LuGitBranch className="text-lg" />
@@ -134,7 +144,7 @@ const Sidebar = () => {
                     <NavLink
                         to="/ad-banner"
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-200 
+                            `flex items-center gap-3 px-3 py-2 text-md rounded-md text-gray-700 hover:bg-gray-200 
                             ${isActive ? "bg-[#dfabb3] text-white" : ""}`
                         }
                     >
@@ -144,7 +154,7 @@ const Sidebar = () => {
                     <NavLink
                         to="/profile"
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-200 
+                            `flex items-center gap-3 px-3 py-2 text-md rounded-md text-gray-700 hover:bg-gray-200 
                             ${isActive ? "bg-[#dfabb3] text-white" : ""}`
                         }
                     >
@@ -154,7 +164,7 @@ const Sidebar = () => {
                     <NavLink
                         to="/order"
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-200 
+                            `flex items-center gap-3 px-3 py-2 text-md rounded-md text-gray-700 hover:bg-gray-200 
                             ${isActive ? "bg-[#dfabb3] text-white" : ""}`
                         }
                     >
@@ -164,27 +174,18 @@ const Sidebar = () => {
                     <NavLink
                         to="/offers"
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-200 
+                            `flex items-center gap-3 px-3 py-2 text-md rounded-md text-gray-700 hover:bg-gray-200 
                             ${isActive ? "bg-[#dfabb3] text-white" : ""}`
                         }
                     >
                         <FaGift className="text-xl" />
                         Offers
                     </NavLink>
-                    <NavLink
-                        to="/brands"
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-200 
-                            ${isActive ? "bg-[#dfabb3] text-white" : ""}`
-                        }
-                    >
-                        <LuTag className="text-xl" />
-                        Brands
-                    </NavLink>
+
                     <NavLink
                         to="/users"
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2 text-sm rounded-md text-gray-700 hover:bg-gray-200 
+                            `flex items-center gap-3 px-3 py-2 text-md rounded-md text-gray-700 hover:bg-gray-200 
                             ${isActive ? "bg-[#dfabb3] text-white" : ""}`
                         }
                     >

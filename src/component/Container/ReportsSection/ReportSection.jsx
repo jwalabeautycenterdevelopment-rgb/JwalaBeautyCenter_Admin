@@ -431,7 +431,7 @@ const ReportSection = () => {
                     </div>
                 </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between">
                         <div>
@@ -493,7 +493,7 @@ const ReportSection = () => {
                     </div>
                 </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 <div className="lg:col-span-2 bg-white rounded-xl shadow-md p-6 border border-gray-200">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-semibold text-gray-800">Revenue & Orders</h2>
@@ -578,7 +578,7 @@ const ReportSection = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-semibold text-gray-800">Best Selling Products</h2>
@@ -712,8 +712,8 @@ const ReportSection = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Store Overview</h2>
                     <div className="space-y-4">
                         <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">

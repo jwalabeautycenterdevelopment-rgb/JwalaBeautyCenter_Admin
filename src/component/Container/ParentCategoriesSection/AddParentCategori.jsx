@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import CommonPopup from "../../../common/CommonPopup";
 import { errorAlert, successAlert, warningAlert } from "../../../utils/alertService";
 import { memo, useEffect, useState } from "react";
-import { createParentCategory, getParentCategory, updateParentCategory } from "../../../store/slice/parentCategorySlice";
+import { clearError, clearMessage, createParentCategory, getParentCategory, updateParentCategory } from "../../../store/slice/parentCategorySlice";
 import InputField from "../../../common/CommonInput";
 import Button from "../../../common/Button";
 import { Upload, X } from "lucide-react";
@@ -41,12 +41,14 @@ const AddParentCategori = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateD
         if (createCategorySuccessmsg) {
             successAlert(createCategorySuccessmsg);
             setIsModalOpen(false);
+            dispatch(clearMessage())
             dispatch(getParentCategory());
             setFormData({ name: "", slug: "", description: "" });
             setUpdateData(null)
         }
         if (createCategoryErrorsmsg) {
             errorAlert(createCategoryErrorsmsg);
+            dispatch(clearError())
         }
     }, [createCategorySuccessmsg, createCategoryErrorsmsg]);
 
@@ -135,7 +137,6 @@ const AddParentCategori = ({ isModalOpen, setIsModalOpen, upDateData, setUpdateD
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center transition-all duration-200 hover:border-blue-400 hover:bg-blue-50">
                         <input
                             type="file"
-                            multiple
                             onChange={handleFileChange}
                             className="hidden"
                             accept="image/*"

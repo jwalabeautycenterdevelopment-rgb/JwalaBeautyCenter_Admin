@@ -106,7 +106,7 @@ const BannerSection = () => {
                                     <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 shadow-md rounded-md py-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
                                         <button
                                             onClick={() => handleView(banner)}
-                                            className="w-full text-left px-4 py-2 text-blue-600 hover:bg-blue-100 flex items-center gap-2 text-sm cursor-pointer"
+                                            className="w-full text-left px-4 py-2  hover:bg-blue-100 flex items-center gap-2 text-sm cursor-pointer"
                                         >
                                             👁 View
                                         </button>

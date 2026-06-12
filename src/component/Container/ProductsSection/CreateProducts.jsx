@@ -12,6 +12,11 @@ import { getColorName } from "../../../utils/getColorName";
 import { slugify } from "../../../utils/slugify";
 import SingleSelectDropdown from "../../../common/SingleSelectDropdown";
 import { getPricePayload } from "../../../utils/getPricePercentage";
+import { bulkCreateProducts } from "../../../store/slice/productSlice";
+import BulkProductUploadModal from "./BulkProductUploadModal";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+
 
 const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const dispatch = useDispatch();
@@ -36,6 +41,10 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const [newColorCode, setNewColorCode] = useState("#ff69b4");
     const [newUnit, setNewUnit] = useState("");
     const [keywordInput, setKeywordInput] = useState("");
+    const [showBulkModal, setShowBulkModal] = useState(false);
+    const [excelFile, setExcelFile] = useState(null);
+    const [previewData, setPreviewData] = useState([]);
+
 
     const [form, setForm] = useState({
         name: "", description: "", price: "", offerPrice: "", weight: "", stock: "", category: "", brand: "",
@@ -109,7 +118,6 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
 
     const handleNameChange = (e) => {
         const value = e.target.value;
-
         setForm((prev) => ({
             ...prev,
             name: value,
@@ -124,6 +132,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
             slug: slugify(value),
         }));
     };
+
     const handleToggleVariant = () => setIsShowVariant(prev => !prev);
 
     const handleAddKeyword = () => {
@@ -299,6 +308,187 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     };
 
 
+    const downloadTemplate = async () => {
+        if (!allSubCategories.length || !allBrands.length) {
+            return warningAlert("Categories or Brands not loaded");
+        }
+
+        const workbook = new ExcelJS.Workbook();
+
+        const sheet = workbook.addWorksheet("Products");
+        const categorySheet = workbook.addWorksheet("Categories");
+        const brandSheet = workbook.addWorksheet("Brands");
+
+        allSubCategories.forEach((cat) => {
+            categorySheet.addRow([cat.name]);
+        });
+
+        allBrands.forEach((brand) => {
+            brandSheet.addRow([brand.name]);
+        });
+
+        sheet.columns = [
+            { header: "name", key: "name", width: 30 },
+            { header: "slug", key: "slug", width: 30 },
+            { header: "category", key: "category", width: 25 },
+            { header: "brand", key: "brand", width: 25 },
+            { header: "description", key: "description", width: 50 },
+            { header: "price", key: "price", width: 15 },
+            { header: "offerPrice", key: "offerPrice", width: 15 },
+            { header: "stock", key: "stock", width: 15 },
+            { header: "weight", key: "weight", width: 15 },
+            { header: "tags", key: "tags", width: 30 },
+            { header: "keywords", key: "keywords", width: 40 },
+            { header: "metaTitle", key: "metaTitle", width: 40 },
+            { header: "metaDescription", key: "metaDescription", width: 60 },
+            { header: "canonicalTag", key: "canonicalTag", width: 50 },
+            { header: "isBestSeller", key: "isBestSeller", width: 20 },
+            { header: "isNewArrival", key: "isNewArrival", width: 20 },
+            { header: "status", key: "status", width: 15 },
+            { header: "variants", key: "variants", width: 80 },
+        ];
+
+        for (let i = 2; i <= 500; i++) {
+            sheet.getCell(`B${i}`).dataValidation = {
+                type: "list",
+                allowBlank: true,
+                formulae: [
+                    `"${allSubCategories
+                        .map((c) => c.name)
+                        .join(",")}"`
+                ],
+            };
+
+            sheet.getCell(`C${i}`).dataValidation = {
+                type: "list",
+                allowBlank: true,
+                formulae: [
+                    `"${allBrands
+                        .map((b) => b.name)
+                        .join(",")}"`
+                ],
+            };
+        }
+
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        saveAs(
+            new Blob([buffer]),
+            "Product_Bulk_Template.xlsx"
+        );
+    };
+
+    const handleExcelChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setExcelFile(file);
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            const data = evt.target.result;
+
+            const workbook = XLSX.read(data, {
+                type: "binary",
+            });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+            setPreviewData(jsonData);
+        };
+        reader.readAsBinaryString(file);
+    };
+
+
+    const handleBulkUpload = () => {
+        if (!previewData?.length) return;
+        const categoryMap = Object.fromEntries(
+            allSubCategories.map((cat) => [
+                cat.name.toLowerCase().trim(),
+                cat._id,
+            ])
+        );
+
+        const brandMap = Object.fromEntries(
+            allBrands.map((brand) => [
+                brand.name.toLowerCase().trim(),
+                brand._id,
+            ])
+        );
+
+        const payload = {
+            products: previewData
+                .filter(
+                    (row) =>
+                        row.name &&
+                        row.name !== "Required" &&
+                        row.slug !== "Required lowercase-slug"
+                )
+                .map((row) => ({
+                    name: row.name || "",
+                    slug: row.slug || slugify(row.name || ""),
+
+                    category:
+                        categoryMap[
+                        row.category?.toLowerCase()?.trim()
+                        ] || "",
+
+                    brand:
+                        brandMap[
+                        row.brand?.toLowerCase()?.trim()
+                        ] || "",
+
+                    description: row.description || "",
+
+                    price: Number(row.price || 0),
+                    offerPrice: Number(row.offerPrice || 0),
+                    stock: Number(row.stock || 0),
+
+                    weight: row.weight || "",
+
+                    tags: row.tags
+                        ? String(row.tags)
+                            .split(",")
+                            .map((t) => t.trim())
+                            .filter(Boolean)
+                        : [],
+
+                    keywords: row.keywords
+                        ? String(row.keywords)
+                            .split(",")
+                            .map((k) => k.trim())
+                            .filter(Boolean)
+                        : [],
+
+                    metaTitle: row.metaTitle || "",
+                    metaDescription: row.metaDescription || "",
+                    canonicalTag: row.canonicalTag || "",
+
+                    isBestSeller:
+                        String(row.isBestSeller).toLowerCase() === "true",
+
+                    isNewArrival:
+                        String(row.isNewArrival).toLowerCase() === "true",
+
+                    status: Number(row.status || 1),
+
+                    variants: row.variants
+                        ? JSON.parse(row.variants)
+                        : [],
+                })),
+        };
+
+        const invalidProducts = payload.products.filter(
+            (p) => !p.category || !p.brand
+        );
+        if (invalidProducts.length > 0) {
+            console.log("Invalid Products:", invalidProducts);
+
+            return warningAlert(
+                "Some category or brand names from Excel do not exist in the system."
+            );
+        }
+        console.log("Final Payload:", payload);
+        dispatch(bulkCreateProducts(payload));
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -371,6 +561,8 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
         onSubmit(formDataToSubmit);
     };
 
+
+
     const ImageUploadBox = ({ images = [], onChange, onRemove, label = "Images (Max 5)" }) => {
         const newCount = images.filter(i => i instanceof File).length;
         const inputId = `upload-${label.replace(/\s+/g, "-").toLowerCase()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -410,378 +602,409 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     };
 
     return (
-        <div className="bg-white p-6 min-h-screen">
-            <div className="flex gap-3 items-center mb-6">
-                <IoMdArrowRoundBack size={28} className="cursor-pointer hover:text-pink-600" onClick={backNavigation} />
-                <h2 className="text-3xl font-bold">{formData ? "Update Product" : "Add New Product"}</h2>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <>
+            <div className="bg-white p-6 min-h-screen">
+                <div className="flex gap-3 items-center justify-between mb-6">
+                    <div className="flex items-center">
+                        <IoMdArrowRoundBack size={28} className="cursor-pointer hover:text-pink-600" onClick={backNavigation} />
+                        <h2 className="text-3xl font-bold">{formData ? "Update Product" : "Add New Product"}</h2>
+                    </div>
+                    <div className="flex gap-1">
+                        <button
+                            type="button"
+                            onClick={downloadTemplate}
+                            className="px-5 py-2 bg-black text-sm cursor-pointer text-white rounded-lg"
+                        >
+                            Download Template
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowBulkModal(true)}
+                            className="px-5 py-2 bg-black text-sm text-white cursor-pointer rounded-lg cursor-pointer"
+                        >
+                            Bulk Upload
+                        </button>
+                    </div>
+
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Product Name *</label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={form?.name}
+                                onChange={handleNameChange}
+                                required
+                                className="w-full p-3 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
+                                placeholder="Enter product name"
+                            />
+                        </div>
+                        <div>
+                            <SingleSelectDropdown
+                                label="Category *"
+                                options={allSubCategories}
+                                value={form.category}
+                                onChange={(val) => setForm({ ...form, category: val })}
+                                searchable={true}
+                            />
+                        </div>
+                        <div>
+                            <SingleSelectDropdown
+                                label="Brand *"
+                                options={allBrands}
+                                value={form.brand}
+                                onChange={(val) => setForm({ ...form, brand: val })}
+                                searchable={true}
+                            />
+                        </div>
+                    </div>
                     <div>
-                        <label className="block text-sm font-medium mb-1">Product Name *</label>
+                        <label className="block text-sm font-medium mb-1">Product Slug *</label>
                         <input
                             type="text"
-                            name="name"
-                            value={form?.name}
-                            onChange={handleNameChange}
+                            name="slug"
+                            value={form?.slug}
+                            onChange={handleSlugChange}
                             required
                             className="w-full p-3 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
-                            placeholder="Enter product name"
+                            placeholder="Slug"
                         />
                     </div>
                     <div>
-                        <SingleSelectDropdown
-                            label="Category *"
-                            options={allSubCategories}
-                            value={form.category}
-                            onChange={(val) => setForm({ ...form, category: val })}
-                            searchable={true}
-                        />
+                        <label className="block text-sm font-medium mb-1">Description</label>
+                        <textarea name="description" value={form?.description} onChange={handleChange} rows={5} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300"></textarea>
                     </div>
-                    <div>
-                        <SingleSelectDropdown
-                            label="Brand *"
-                            options={allBrands}
-                            value={form.brand}
-                            onChange={(val) => setForm({ ...form, brand: val })}
-                            searchable={true}
-                        />
-                    </div>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium mb-1">Product Slug *</label>
-                    <input
-                        type="text"
-                        name="slug"
-                        value={form?.slug}
-                        onChange={handleSlugChange}
-                        required
-                        className="w-full p-3 border border-pink-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-300"
-                        placeholder="Slug"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium mb-1">Description</label>
-                    <textarea name="description" value={form?.description} onChange={handleChange} rows={5} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300"></textarea>
-                </div>
-                <div className="flex justify-between items-center py-4  border-gray-300">
-                    <h3 className="text-xl font-semibold">
-                        Product Variants {form.images.length > 0 ? "(Image selected, variants locked)" : "(Optional)"}
-                    </h3>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={isShowVariant}
-                            onChange={handleToggleVariant}
-                            className="sr-only peer"
-                            disabled={form.images.length > 0}
-                        />
-                        <div className="w-12 h-6 bg-gray-300 rounded-full peer peer-checked:bg-pink-600 
+                    <div className="flex justify-between items-center py-4  border-gray-300">
+                        <h3 className="text-xl font-semibold">
+                            Product Variants {form.images.length > 0 ? "(Image selected, variants locked)" : "(Optional)"}
+                        </h3>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={isShowVariant}
+                                onChange={handleToggleVariant}
+                                className="sr-only peer"
+                                disabled={form.images.length > 0}
+                            />
+                            <div className="w-12 h-6 bg-gray-300 rounded-full peer peer-checked:bg-pink-600 
     after:content-[''] after:absolute after:top-0.5 after:left-0.5 
     after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
     peer-checked:after:translate-x-6">
-                        </div>
-                    </label>
-                </div>
-                {
-                    !isShowVariant && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-medium mb-1"> MRP (Price) </label>
-                                <input type="number" name="price" value={form?.price} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Discount Price</label>
-                                <input type="number" name="offerPrice" value={form?.offerPrice} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                            </div>
-                        </div>
-                    )
-                }
-                {
-                    !isShowVariant && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Stock</label>
-                                <input type="number" name="stock" value={form?.stock} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Weight</label>
-                                <input type="text" name="weight" value={form?.weight} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                            </div>
-                        </div>
-                    )
-                }
-                {
-                    !isShowVariant && (
-                        <ImageUploadBox images={form?.images} onChange={handleMainImageChange} onRemove={handleRemoveMainImage} label="Main Product Images (Max 5)" />
-
-                    )
-                }
-                {isShowVariant && (
-                    <div className="space-y-8">
-                        {form?.variants?.map((variant, index) => (
-                            <div key={index} className="p-6 border-2 border-pink-200 rounded-xl bg-pink-50 relative">
-                                <button type="button" onClick={() => handleRemoveVariant(index)} className="absolute top-4 right-4 text-red-600 hover:bg-red-100 rounded-full p-2">
-                                    <FaTimes size={20} />
-                                </button>
-                                <div>Varian Name {variant?.variantName}</div>
-                                <div className="mb-4">
-                                    Type-
-                                    <span className="text-lg font-bold text-pink-700">{variant?.name || "Variant"}</span>
+                        </label>
+                    </div>
+                    {
+                        !isShowVariant && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1"> MRP (Price) </label>
+                                    <input type="number" name="price" value={form?.price} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                                 </div>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                    <input type="text" placeholder="Weight" value={variant?.weight} onChange={e => handleVariantChange(index, "weight", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                                    <input type="number" placeholder="Price *" value={variant?.price} onChange={e => handleVariantChange(index, "price", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                                    <input type="number" placeholder="Discount Price" value={variant?.offerPrice} onChange={e => handleVariantChange(index, "offerPrice", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
-                                    <input type="number" placeholder="Stock" value={variant?.stock} onChange={e => handleVariantChange(index, "stock", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Discount Price</label>
+                                    <input type="number" name="offerPrice" value={form?.offerPrice} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
                                 </div>
-                                <ImageUploadBox images={variant?.variantImage || []} onChange={e => handleExistingVariantImageChange(e, index)} onRemove={i => handleRemoveExistingVariantImage(index, i)} label={`Variant Images - ${variant.name || "Variant"} (Max 5)`} />
                             </div>
-                        ))}
-                        <div className="p-8 border-4 border-dashed border-pink-300 rounded-2xl bg-pink-50">
-                            <h4 className="text-xl font-bold text-pink-800 mb-6">Add New Variant</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                                <input type="text" value={variantInput?.variantName} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" placeholder="Variant Name" onChange={e => setVariantInput(p => ({ ...p, variantName: e.target.value }))} />
-                                <select value={variantInput?.type} onChange={handleTypeChange} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300">
-                                    <option value="">Select Type</option>
-                                    {types?.map(t => (
-                                        <option key={t._id} value={t._id}>{t.name}</option>
-                                    ))}
-                                </select>
-                                {variantInput?.type && currentType && (
-                                    <select value={variantInput?.typeNameId} onChange={handleTypeNameSelect} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300">
-                                        <option value="">Select {currentType.name}</option>
-                                        <option value="add-new" className="font-bold text-pink-600">
-                                            Add New {currentType.name}
-                                        </option>
-                                        {typeNamesList?.map(tn => {
-                                            const isColor = !!tn.colorCode || (!tn.unit && /^#[0-9A-F]{6}$/i.test(tn.name.trim()));
-                                            const color = tn.colorCode || (isColor ? tn.name.trim() : null);
-                                            const label = `${tn.name} ${tn.unit ? `(${tn.unit})` : ''}`.trim();
-                                            const displayLabel = isColor ? `● ${label}` : label;
-                                            return (
-                                                <option
-                                                    key={tn._id}
-                                                    value={tn._id}
-                                                    style={{
-                                                        color: color && color !== '#FFFFFF' ? color : '#1f2937',
-                                                        fontWeight: isColor ? '600' : 'normal'
-                                                    }}
-                                                >
-                                                    {displayLabel}
-                                                </option>
-                                            );
-                                        })}
-                                    </select>
-                                )}
-                                {variantInput.typeNameId && typeNamesList?.find(tn => tn._id === variantInput.typeNameId) && (
-                                    <div className="flex items-center gap-4">
-                                        {typeNamesList?.find(tn => tn._id === variantInput.typeNameId)?.colorCode && (
-                                            <div className="w-16 h-16 rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300 border-2 shadow" style={{ backgroundColor: typeNamesList.find(tn => tn._id === variantInput.typeNameId).colorCode }}></div>
-                                        )}
-                                        <span className="text-lg font-semibold text-pink-700">{variantInput.name}</span>
+                        )
+                    }
+                    {
+                        !isShowVariant && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Stock</label>
+                                    <input type="number" name="stock" value={form?.stock} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Weight</label>
+                                    <input type="text" name="weight" value={form?.weight} onChange={handleChange} className="w-full p-3 border border-pink-300 rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                                </div>
+                            </div>
+                        )
+                    }
+                    {
+                        !isShowVariant && (
+                            <ImageUploadBox images={form?.images} onChange={handleMainImageChange} onRemove={handleRemoveMainImage} label="Main Product Images (Max 5)" />
+
+                        )
+                    }
+                    {isShowVariant && (
+                        <div className="space-y-8">
+                            {form?.variants?.map((variant, index) => (
+                                <div key={index} className="p-6 border-2 border-pink-200 rounded-xl bg-pink-50 relative">
+                                    <button type="button" onClick={() => handleRemoveVariant(index)} className="absolute top-4 right-4 text-red-600 hover:bg-red-100 rounded-full p-2">
+                                        <FaTimes size={20} />
+                                    </button>
+                                    <div>Varian Name {variant?.variantName}</div>
+                                    <div className="mb-4">
+                                        Type-
+                                        <span className="text-lg font-bold text-pink-700">{variant?.name || "Variant"}</span>
                                     </div>
-                                )}
-                            </div>
-                            {showCreateTypeName && currentType && (
-                                <div className="p-8 bg-white rounded-2xl border-4 border-pink-500 shadow-2xl mb-8 -mx-8">
-                                    <h5 className="text-2xl font-bold text-pink-800 mb-8 text-center">
-                                        Create New {currentType?.name}
-                                    </h5>
-                                    {currentType?.displayType === "color" ? (
-                                        <div className="space-y-6 text-center">
-                                            <p className="text-lg text-gray-600">
-                                                Variant name will be saved as:
-                                                <span className="block font-mono text-3xl font-bold text-pink-700 mt-2">
-                                                    {newColorCode}
-                                                </span>
-                                                <span>
-                                                    {
-                                                        getColorName(newColorCode)
-                                                    }
-                                                </span>
-                                            </p>
-                                            <div className="flex justify-center">
-                                                <HexColorPicker color={newColorCode} onChange={setNewColorCode} />
-                                            </div>
-                                            <input
-                                                type="text"
-                                                value={newColorCode}
-                                                onChange={(e) => setNewColorCode(e.target.value)}
-                                                placeholder="#ff0000"
-                                                className="w-full max-w-md mx-auto p-5 text-center text-xl font-mono border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400"
-                                            />
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                        <input type="text" placeholder="Weight" value={variant?.weight} onChange={e => handleVariantChange(index, "weight", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                                        <input type="number" placeholder="Price *" value={variant?.price} onChange={e => handleVariantChange(index, "price", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                                        <input type="number" placeholder="Discount Price" value={variant?.offerPrice} onChange={e => handleVariantChange(index, "offerPrice", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                                        <input type="number" placeholder="Stock" value={variant?.stock} onChange={e => handleVariantChange(index, "stock", e.target.value)} className="p-3 border rounded-lg  focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                                    </div>
+                                    <ImageUploadBox images={variant?.variantImage || []} onChange={e => handleExistingVariantImageChange(e, index)} onRemove={i => handleRemoveExistingVariantImage(index, i)} label={`Variant Images - ${variant.name || "Variant"} (Max 5)`} />
+                                </div>
+                            ))}
+                            <div className="p-8 border-4 border-dashed border-pink-300 rounded-2xl bg-pink-50">
+                                <h4 className="text-xl font-bold text-pink-800 mb-6">Add New Variant</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                    <input type="text" value={variantInput?.variantName} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" placeholder="Variant Name" onChange={e => setVariantInput(p => ({ ...p, variantName: e.target.value }))} />
+                                    <select value={variantInput?.type} onChange={handleTypeChange} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300">
+                                        <option value="">Select Type</option>
+                                        {types?.map(t => (
+                                            <option key={t._id} value={t._id}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                    {variantInput?.type && currentType && (
+                                        <select value={variantInput?.typeNameId} onChange={handleTypeNameSelect} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300">
+                                            <option value="">Select {currentType.name}</option>
+                                            <option value="add-new" className="font-bold text-pink-600">
+                                                Add New {currentType.name}
+                                            </option>
+                                            {typeNamesList?.map(tn => {
+                                                const isColor = !!tn.colorCode || (!tn.unit && /^#[0-9A-F]{6}$/i.test(tn.name.trim()));
+                                                const color = tn.colorCode || (isColor ? tn.name.trim() : null);
+                                                const label = `${tn.name} ${tn.unit ? `(${tn.unit})` : ''}`.trim();
+                                                const displayLabel = isColor ? `● ${label}` : label;
+                                                return (
+                                                    <option
+                                                        key={tn._id}
+                                                        value={tn._id}
+                                                        style={{
+                                                            color: color && color !== '#FFFFFF' ? color : '#1f2937',
+                                                            fontWeight: isColor ? '600' : 'normal'
+                                                        }}
+                                                    >
+                                                        {displayLabel}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                    )}
+                                    {variantInput.typeNameId && typeNamesList?.find(tn => tn._id === variantInput.typeNameId) && (
+                                        <div className="flex items-center gap-4">
+                                            {typeNamesList?.find(tn => tn._id === variantInput.typeNameId)?.colorCode && (
+                                                <div className="w-16 h-16 rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300 border-2 shadow" style={{ backgroundColor: typeNamesList.find(tn => tn._id === variantInput.typeNameId).colorCode }}></div>
+                                            )}
+                                            <span className="text-lg font-semibold text-pink-700">{variantInput.name}</span>
                                         </div>
-                                    ) : currentType?.displayType === "unit" ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                    )}
+                                </div>
+                                {showCreateTypeName && currentType && (
+                                    <div className="p-8 bg-white rounded-2xl border-4 border-pink-500 shadow-2xl mb-8 -mx-8">
+                                        <h5 className="text-2xl font-bold text-pink-800 mb-8 text-center">
+                                            Create New {currentType?.name}
+                                        </h5>
+                                        {currentType?.displayType === "color" ? (
+                                            <div className="space-y-6 text-center">
+                                                <p className="text-lg text-gray-600">
+                                                    Variant name will be saved as:
+                                                    <span className="block font-mono text-3xl font-bold text-pink-700 mt-2">
+                                                        {newColorCode}
+                                                    </span>
+                                                    <span>
+                                                        {
+                                                            getColorName(newColorCode)
+                                                        }
+                                                    </span>
+                                                </p>
+                                                <div className="flex justify-center">
+                                                    <HexColorPicker color={newColorCode} onChange={setNewColorCode} />
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={newColorCode}
+                                                    onChange={(e) => setNewColorCode(e.target.value)}
+                                                    placeholder="#ff0000"
+                                                    className="w-full max-w-md mx-auto p-5 text-center text-xl font-mono border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400"
+                                                />
+                                            </div>
+                                        ) : currentType?.displayType === "unit" ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                                    <input
+                                                        type="text"
+                                                        value={newTypeNameValue}
+                                                        onChange={(e) => setNewTypeNameValue(e.target.value)}
+                                                        placeholder="(e.g. 250)"
+                                                        className="w-full p-5 border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400 text-lg"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Unit Only</label>
+                                                    <input
+                                                        type="text"
+                                                        value={newUnit}
+                                                        onChange={(e) => setNewUnit(e.target.value)}
+                                                        placeholder="(e.g kg, g, ml)"
+                                                        className="w-full p-5 border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400 text-lg"
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="max-w-xl mx-auto">
                                                 <input
                                                     type="text"
                                                     value={newTypeNameValue}
                                                     onChange={(e) => setNewTypeNameValue(e.target.value)}
-                                                    placeholder="(e.g. 250)"
-                                                    className="w-full p-5 border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400 text-lg"
+                                                    placeholder="Enter value (e.g. Apple,Orange)"
+                                                    className="w-full p-6 text-xl border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400 text-center font-medium"
                                                     required
                                                 />
                                             </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">Unit Only</label>
-                                                <input
-                                                    type="text"
-                                                    value={newUnit}
-                                                    onChange={(e) => setNewUnit(e.target.value)}
-                                                    placeholder="(e.g kg, g, ml)"
-                                                    className="w-full p-5 border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400 text-lg"
-                                                    required
-                                                />
-                                            </div>
+                                        )}
+                                        <div className="flex justify-center gap-6 mt-10">
+                                            <button
+                                                type="button"
+                                                onClick={handleCreateTypeName}
+                                                className="px-12 py-5 bg-linear-to-r from-pink-600 to-pink-700 text-white text-xl font-bold rounded-2xl hover:from-pink-700 hover:to-pink-800 transform hover:scale-105 transition shadow-xl"
+                                            >
+                                                Create Variant Value
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowCreateTypeName(false);
+                                                    setNewTypeNameValue("");
+                                                    setNewColorCode("#ff69b4");
+                                                    setNewUnit("");
+                                                }}
+                                                className="px-12 py-5 border-4 border-pink-600 text-pink-600 text-xl font-bold rounded-2xl hover:bg-pink-50 transition"
+                                            >
+                                                Cancel
+                                            </button>
                                         </div>
-                                    ) : (
-                                        <div className="max-w-xl mx-auto">
-                                            <input
-                                                type="text"
-                                                value={newTypeNameValue}
-                                                onChange={(e) => setNewTypeNameValue(e.target.value)}
-                                                placeholder="Enter value (e.g. Apple,Orange)"
-                                                className="w-full p-6 text-xl border-4 border-pink-300 rounded-2xl focus:outline-none focus:ring-4 focus:ring-pink-400 text-center font-medium"
-                                                required
-                                            />
-                                        </div>
-                                    )}
-                                    <div className="flex justify-center gap-6 mt-10">
-                                        <button
-                                            type="button"
-                                            onClick={handleCreateTypeName}
-                                            className="px-12 py-5 bg-linear-to-r from-pink-600 to-pink-700 text-white text-xl font-bold rounded-2xl hover:from-pink-700 hover:to-pink-800 transform hover:scale-105 transition shadow-xl"
-                                        >
-                                            Create Variant Value
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setShowCreateTypeName(false);
-                                                setNewTypeNameValue("");
-                                                setNewColorCode("#ff69b4");
-                                                setNewUnit("");
-                                            }}
-                                            className="px-12 py-5 border-4 border-pink-600 text-pink-600 text-xl font-bold rounded-2xl hover:bg-pink-50 transition"
-                                        >
-                                            Cancel
-                                        </button>
                                     </div>
+                                )}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                    <input type="text" placeholder="Weight" value={variantInput?.weight} onChange={e => setVariantInput(p => ({ ...p, weight: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
+                                    <input type="number" placeholder="MRP (Price*)" value={variantInput?.price} onChange={e => setVariantInput(p => ({ ...p, price: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
+                                    <input type="number" placeholder="Discount Price" value={variantInput?.offerPrice} onChange={e => setVariantInput(p => ({ ...p, offerPrice: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
+                                    <input type="number" placeholder="Stock" value={variantInput?.stock} onChange={e => setVariantInput(p => ({ ...p, stock: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
                                 </div>
-                            )}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                <input type="text" placeholder="Weight" value={variantInput?.weight} onChange={e => setVariantInput(p => ({ ...p, weight: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
-                                <input type="number" placeholder="MRP (Price*)" value={variantInput?.price} onChange={e => setVariantInput(p => ({ ...p, price: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
-                                <input type="number" placeholder="Discount Price" value={variantInput?.offerPrice} onChange={e => setVariantInput(p => ({ ...p, offerPrice: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
-                                <input type="number" placeholder="Stock" value={variantInput?.stock} onChange={e => setVariantInput(p => ({ ...p, stock: e.target.value }))} className="p-3 border rounded-lg  focus:outline-pink-500 focus:ring-2 focus:ring-pink-300" />
+                                <ImageUploadBox images={variantInput?.variantImage} onChange={handleVariantInputImageChange} onRemove={handleRemoveVariantInputImage} label="Variant Images (Optional)" />
+                                <button type="button" onClick={handleAddVariant} className="w-full mt-8 py-4 bg-pink-600 text-white text-lg font-bold rounded-xl hover:bg-pink-700 transition">
+                                    + Add Variant
+                                </button>
                             </div>
-                            <ImageUploadBox images={variantInput?.variantImage} onChange={handleVariantInputImageChange} onRemove={handleRemoveVariantInputImage} label="Variant Images (Optional)" />
-                            <button type="button" onClick={handleAddVariant} className="w-full mt-8 py-4 bg-pink-600 text-white text-lg font-bold rounded-xl hover:bg-pink-700 transition">
-                                + Add Variant
-                            </button>
                         </div>
-                    </div>
-                )}
-                <div className="space-y-8 ">
-                    <div className="flex gap-10 border-b pb-2 border-gray-300">
-                        <label className="flex items-center gap-3 text-lg">
-                            <input type="checkbox" name="isBestSeller" checked={form?.isBestSeller} onChange={handleChange} className="w-6 h-6 text-pink-600" />
-                            <span>Best Seller</span>
-                        </label>
-                        <label className="flex items-center gap-3 text-lg">
-                            <input type="checkbox" name="isNewArrival" checked={form?.isNewArrival} onChange={handleChange} className="w-6 h-6 text-pink-600" />
-                            <span>New Arrival</span>
-                        </label>
-                    </div>
-                    <div>
+                    )}
+                    <div className="space-y-8 ">
+                        <div className="flex gap-10 border-b pb-2 border-gray-300">
+                            <label className="flex items-center gap-3 text-lg">
+                                <input type="checkbox" name="isBestSeller" checked={form?.isBestSeller} onChange={handleChange} className="w-6 h-6 text-pink-600" />
+                                <span>Best Seller</span>
+                            </label>
+                            <label className="flex items-center gap-3 text-lg">
+                                <input type="checkbox" name="isNewArrival" checked={form?.isNewArrival} onChange={handleChange} className="w-6 h-6 text-pink-600" />
+                                <span>New Arrival</span>
+                            </label>
+                        </div>
                         <div>
-                            <h5 className="text-lg font-semibold mb-3">SEO</h5>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Meta Title</label>
-                                    <input
-                                        type="text"
-                                        name="metaTitle"
-                                        value={form?.metaTitle}
-                                        onChange={handleChange}
-                                        placeholder="SEO Meta Title"
-                                        className="w-full p-3 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-400"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Canonical URL</label>
-                                    <input
-                                        type="url"
-                                        name="canonicalTag"
-                                        value={form?.canonicalTag}
-                                        onChange={handleChange}
-                                        placeholder="https://yoursite.com/old-page"
-                                        className="w-full p-3 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-400"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Keywords (SEO)</label>
-                                    <div className="flex gap-2">
+                            <div>
+                                <h5 className="text-lg font-semibold mb-3">SEO</h5>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Meta Title</label>
                                         <input
                                             type="text"
-                                            value={keywordInput}
-                                            onChange={(e) => setKeywordInput(e.target.value)}
-                                            onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddKeyword())}
-                                            placeholder="Type + Enter"
-                                            className="flex-1 p-3 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-400"
+                                            name="metaTitle"
+                                            value={form?.metaTitle}
+                                            onChange={handleChange}
+                                            placeholder="SEO Meta Title"
+                                            className="w-full p-3 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-400"
                                         />
-                                        <button
-                                            type="button"
-                                            onClick={handleAddKeyword}
-                                            className="px-4 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
-                                        >
-                                            Add
-                                        </button>
                                     </div>
-                                    <div className="flex flex-wrap gap-2 mt-3">
-                                        {form?.keywords.map((kw, i) => (
-                                            <span
-                                                key={i}
-                                                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium"
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Canonical URL</label>
+                                        <input
+                                            type="url"
+                                            name="canonicalTag"
+                                            value={form?.canonicalTag}
+                                            onChange={handleChange}
+                                            placeholder="https://yoursite.com/old-page"
+                                            className="w-full p-3 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-400"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Keywords (SEO)</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={keywordInput}
+                                                onChange={(e) => setKeywordInput(e.target.value)}
+                                                onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddKeyword())}
+                                                placeholder="Type + Enter"
+                                                className="flex-1 p-3 border border-pink-300 rounded-lg focus:ring-2 focus:ring-pink-400"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleAddKeyword}
+                                                className="px-4 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
                                             >
-                                                {kw}
-                                                <button type="button" onClick={() => handleRemoveKeyword(kw)}>
-                                                    <FaTimes size={14} />
-                                                </button>
-                                            </span>
-                                        ))}
+                                                Add
+                                            </button>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 mt-3">
+                                            {form?.keywords.map((kw, i) => (
+                                                <span
+                                                    key={i}
+                                                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium"
+                                                >
+                                                    {kw}
+                                                    <button type="button" onClick={() => handleRemoveKeyword(kw)}>
+                                                        <FaTimes size={14} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            <div className="flex flex-wrap gap-3">
+                                {form?.tags?.map((tag, i) => (
+                                    <span key={i} className="inline-flex items-center gap-2 px-5 py-3 bg-pink-200 text-pink-800 rounded-full text-sm font-medium">
+                                        {tag}
+                                        <button type="button" onClick={() => handleRemoveTag(tag)}><FaTimes size={16} /></button>
+                                    </span>
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex flex-wrap gap-3">
-                            {form?.tags?.map((tag, i) => (
-                                <span key={i} className="inline-flex items-center gap-2 px-5 py-3 bg-pink-200 text-pink-800 rounded-full text-sm font-medium">
-                                    {tag}
-                                    <button type="button" onClick={() => handleRemoveTag(tag)}><FaTimes size={16} /></button>
-                                </span>
-                            ))}
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Meta Description</label>
+                            <textarea name="metaDescription" value={form.metaDescription} onChange={handleChange} rows={4} className="w-full p-3 border border-pink-300 rounded-lg"></textarea>
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Meta Description</label>
-                        <textarea name="metaDescription" value={form.metaDescription} onChange={handleChange} rows={4} className="w-full p-3 border border-pink-300 rounded-lg"></textarea>
+                    <div className="flex justify-end gap-6 pt-10 border-t border-gray-300">
+                        <button type="button" onClick={backNavigation} className="px-10 py-4 border-2 border-gray-300 rounded-xl text-lg font-medium hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" disabled={loading} className="px-12 py-4 bg-pink-600 text-white text-lg font-bold rounded-xl hover:bg-pink-700 disabled:opacity-50">
+                            {loading ? "Saving..." : formData ? "Update Product" : "Create Product"}
+                        </button>
                     </div>
-                </div>
-                <div className="flex justify-end gap-6 pt-10 border-t border-gray-300">
-                    <button type="button" onClick={backNavigation} className="px-10 py-4 border-2 border-gray-300 rounded-xl text-lg font-medium hover:bg-gray-50">
-                        Cancel
-                    </button>
-                    <button type="submit" disabled={loading} className="px-12 py-4 bg-pink-600 text-white text-lg font-bold rounded-xl hover:bg-pink-700 disabled:opacity-50">
-                        {loading ? "Saving..." : formData ? "Update Product" : "Create Product"}
-                    </button>
-                </div>
-            </form>
-        </div>
+                </form>
+            </div>
+
+            <BulkProductUploadModal
+                open={showBulkModal}
+                onClose={() => setShowBulkModal(false)}
+                excelFile={excelFile}
+                setExcelFile={setExcelFile}
+                previewData={previewData}
+                setPreviewData={setPreviewData}
+                onUpload={handleBulkUpload}
+            />
+        </>
     );
 };
 

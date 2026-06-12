@@ -16,7 +16,7 @@ export const createProduct = createAsyncThunk(
     } catch (err) {
       return thunkAPI.rejectWithValue(err?.message);
     }
-  }
+  },
 );
 
 export const getProducts = createAsyncThunk(
@@ -34,7 +34,7 @@ export const getProducts = createAsyncThunk(
     } catch (err) {
       return thunkAPI.rejectWithValue(err?.message);
     }
-  }
+  },
 );
 
 export const getSingleProduct = createAsyncThunk(
@@ -49,7 +49,7 @@ export const getSingleProduct = createAsyncThunk(
     } catch (err) {
       return thunkAPI.rejectWithValue(err?.message);
     }
-  }
+  },
 );
 
 export const updateProduct = createAsyncThunk(
@@ -67,7 +67,7 @@ export const updateProduct = createAsyncThunk(
     } catch (err) {
       return thunkAPI.rejectWithValue(err?.message);
     }
-  }
+  },
 );
 
 export const deleteProduct = createAsyncThunk(
@@ -85,7 +85,27 @@ export const deleteProduct = createAsyncThunk(
     } catch (err) {
       return thunkAPI.rejectWithValue(err?.message);
     }
-  }
+  },
+);
+
+export const bulkCreateProducts = createAsyncThunk(
+  "admin/product/bulk-create",
+  async (formData, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState()?.login?.accessToken;
+
+      if (!token) throw new Error("No access token found");
+
+      return await FetchApi({
+        endpoint: "/admin/product/bulk-create",
+        method: "POST",
+        token,
+        body: formData,
+      });
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err?.message);
+    }
+  },
 );
 
 const productSlice = createSlice({
@@ -105,6 +125,10 @@ const productSlice = createSlice({
     loadingDelete: false,
     deleteSuccessMsg: null,
     deleteErrorMsg: null,
+
+    loadingBulkCreate: false,
+    bulkCreateSuccessMsg: null,
+    bulkCreateErrorMsg: null,
   },
   reducers: {
     clearCreateMsg(state) {
@@ -118,6 +142,10 @@ const productSlice = createSlice({
     clearDeleteMsg(state) {
       state.deleteSuccessMsg = null;
       state.deleteErrorMsg = null;
+    },
+    clearBulkCreateMsg(state) {
+      state.bulkCreateSuccessMsg = null;
+      state.bulkCreateErrorMsg = null;
     },
   },
   extraReducers: (builder) => {
@@ -187,6 +215,22 @@ const productSlice = createSlice({
       .addCase(deleteProduct.rejected, (state, action) => {
         state.loadingDelete = false;
         state.deleteErrorMsg = action?.payload || "Failed to delete product";
+      })
+      
+      .addCase(bulkCreateProducts.pending, (state) => {
+        state.loadingBulkCreate = true;
+        state.bulkCreateSuccessMsg = null;
+        state.bulkCreateErrorMsg = null;
+      })
+      .addCase(bulkCreateProducts.fulfilled, (state, action) => {
+        state.loadingBulkCreate = false;
+        state.bulkCreateSuccessMsg =
+          action?.payload?.message || "Products created successfully!";
+      })
+      .addCase(bulkCreateProducts.rejected, (state, action) => {
+        state.loadingBulkCreate = false;
+        state.bulkCreateErrorMsg =
+          action?.payload || "Failed to create products";
       });
   },
 });

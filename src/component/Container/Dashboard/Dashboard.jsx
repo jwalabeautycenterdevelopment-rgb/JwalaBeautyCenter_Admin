@@ -75,25 +75,21 @@ export default function Dashboard() {
                 label: "Pending",
                 value: statusCount["Pending"],
                 color: "bg-yellow-100 text-yellow-800",
-                icon: "⏳"
             },
             {
                 label: "Confirmed",
                 value: statusCount["Confirmed"],
                 color: "bg-blue-100 text-blue-800",
-                icon: "✅"
             },
             {
                 label: "Shipped",
                 value: statusCount["Shipped"],
                 color: "bg-orange-100 text-orange-800",
-                icon: "🚚"
             },
             {
                 label: "Delivered",
                 value: statusCount["Delivered"],
                 color: "bg-emerald-100 text-emerald-800",
-                icon: "📦"
             },
         ];
     };
@@ -116,7 +112,6 @@ export default function Dashboard() {
                     {orderStatus?.map((s) => (
                         <div key={s.label} className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <span className={`w-2 h-2 rounded-full ${s.color.split(" ")[0]}`}></span>
                                 <span className="text-sm font-medium text-slate-700">{s.label}</span>
                                 <span className="text-xs">{s.icon}</span>
                             </div>
@@ -252,15 +247,15 @@ export default function Dashboard() {
                         </p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <Link to={"/reports"} className="px-4 flex gap-1 items-center py-2.5 border border-slate-200 rounded-lg text-slate-700">
+                        <Link to={"/reports"} className="px-4 flex gap-1 items-center py-2 border border-slate-200 rounded-lg text-slate-700">
                             <TrendingUpDown className="w-4 h-4" /> View Reports
                         </Link>
-                        <Link to={"/products"} className="px-4 py-2 text-sm bg-linear-to-r from-pink-500 to-rose-500 text-white rounded-lg shadow-lg">
+                        <Link to={"/products"} className="px-4 py-3 text-sm bg-linear-to-r from-pink-500 to-rose-500 text-white rounded-lg shadow-lg">
                             Add Product
                         </Link>
                     </div>
                 </header>
-                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
                     {stats?.map((stat) => (
                         <StatCard key={stat.title} {...stat} />
                     ))}

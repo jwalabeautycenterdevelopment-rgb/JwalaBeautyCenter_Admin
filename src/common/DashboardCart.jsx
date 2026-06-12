@@ -78,7 +78,7 @@ export function SalesOverview({ salesDataset }) {
 
 export function Card({ children, className = "" }) {
     return (
-        <div className={`bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-200 ${className}`}>
+        <div className={`bg-white rounded-xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-200 ${className}`}>
             {children}
         </div>
     );
@@ -89,7 +89,7 @@ export function StatCard({ title, value, hint, icon: Icon, color }) {
         <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-md">
             <div className="flex items-start justify-between">
                 <div>
-                    <h3 className="text-xs font-medium text-slate-600">{title}</h3>
+                    <h3 className="text-sm font-medium text-slate-600">{title}</h3>
                     <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
                     <p className="mt-2 text-xs text-slate-500 flex items-center gap-1">
                         <TrendingUpDown className="w-3 h-3 text-green-500" />

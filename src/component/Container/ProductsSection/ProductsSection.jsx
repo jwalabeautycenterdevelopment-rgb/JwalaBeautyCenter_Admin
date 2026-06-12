@@ -199,19 +199,19 @@ const ProductsSection = () => {
                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-2">
                                 <button
                                     onClick={() => handleView(product)}
-                                    className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors shadow-lg"
+                                    className="bg-black text-white p-2 rounded-full transition-colors shadow-lg"
                                 >
                                     <FaEye size={14} />
                                 </button>
                                 <button
                                     onClick={() => handleUpdate(product)}
-                                    className="bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-colors shadow-lg"
+                                    className="bg-black text-white p-2 rounded-full  transition-colors shadow-lg"
                                 >
                                     <FaEdit size={14} />
                                 </button>
                                 <button
                                     onClick={() => handleDeleteClick(product?._id)}
-                                    className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors shadow-lg"
+                                    className="bg-black text-white p-2 rounded-full transition-colors shadow-lg"
                                 >
                                     <FaTrash size={14} />
                                 </button>
