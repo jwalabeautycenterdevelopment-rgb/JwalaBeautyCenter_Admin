@@ -255,7 +255,7 @@ const exportProductsForReimport = async (products, fileName, categories = [], br
 const ProductsSection = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const [viewMode, setViewMode] = useState("grid");
+    const [viewMode, setViewMode] = useState("list");
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isUpdate, setIsUpdate] = useState(null);
     const [mode, setMode] = useState("add");
