@@ -108,6 +108,28 @@ export const bulkCreateProducts = createAsyncThunk(
   },
 );
 
+export const bulkDeleteProducts = createAsyncThunk(
+  "admin/product/bulk-delete",
+  async (productIds, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState()?.login?.accessToken;
+
+      if (!token) throw new Error("No access token found");
+
+      return await FetchApi({
+        endpoint: "/admin/product/bulk-delete",
+        method: "DELETE",
+        token,
+        body: {
+          productIds,
+        },
+      });
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err?.message);
+    }
+  },
+);
+
 const productSlice = createSlice({
   name: "product",
   initialState: {
@@ -129,6 +151,10 @@ const productSlice = createSlice({
     loadingBulkCreate: false,
     bulkCreateSuccessMsg: null,
     bulkCreateErrorMsg: null,
+
+    loadingBulkDelete: false,
+    bulkDeleteSuccessMsg: null,
+    bulkDeleteErrorMsg: null,
   },
   reducers: {
     clearCreateMsg(state) {
@@ -146,6 +172,10 @@ const productSlice = createSlice({
     clearBulkCreateMsg(state) {
       state.bulkCreateSuccessMsg = null;
       state.bulkCreateErrorMsg = null;
+    },
+    clearBulkDeleteMsg(state) {
+      state.bulkDeleteSuccessMsg = null;
+      state.bulkDeleteErrorMsg = null;
     },
   },
   extraReducers: (builder) => {
@@ -231,6 +261,22 @@ const productSlice = createSlice({
         state.loadingBulkCreate = false;
         state.bulkCreateErrorMsg =
           action?.payload || "Failed to create products";
+      })
+
+      .addCase(bulkDeleteProducts.pending, (state) => {
+        state.loadingBulkDelete = true;
+        state.bulkDeleteSuccessMsg = null;
+        state.bulkDeleteErrorMsg = null;
+      })
+      .addCase(bulkDeleteProducts.fulfilled, (state, action) => {
+        state.loadingBulkDelete = false;
+        state.bulkDeleteSuccessMsg =
+          action?.payload?.message || "Products deleted successfully!";
+      })
+      .addCase(bulkDeleteProducts.rejected, (state, action) => {
+        state.loadingBulkDelete = false;
+        state.bulkDeleteErrorMsg =
+          action?.payload || "Failed to delete products";
       });
   },
 });
@@ -240,6 +286,7 @@ export const {
   clearUpdateMsg,
   clearDeleteMsg,
   clearBulkCreateMsg,
+  clearBulkDeleteMsg,
 } = productSlice.actions;
 
 export default productSlice.reducer;

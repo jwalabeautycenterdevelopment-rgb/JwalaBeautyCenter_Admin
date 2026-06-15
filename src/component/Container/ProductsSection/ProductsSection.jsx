@@ -22,7 +22,8 @@ import {
     createProduct,
     updateProduct,
     getProducts,
-    deleteProduct
+    deleteProduct,
+    bulkDeleteProducts
 } from "../../../store/slice/productSlice";
 import { getSubCategory } from "../../../store/slice/subCategorySlice";
 import { getBrands } from "../../../store/slice/brandsSlice";
@@ -530,28 +531,20 @@ const ProductsSection = () => {
 
     const confirmBulkDelete = async () => {
         const ids = Array.from(selectedIds);
-        if (ids.length === 0) {
+        if (!ids.length) {
             setIsBulkDeletePopup(false);
             return;
         }
         setIsBulkDeleting(true);
         try {
-            const results = await Promise.allSettled(
-                ids.map((id) => dispatch(deleteProduct(id)).unwrap?.() ?? dispatch(deleteProduct(id)))
-            );
-            const failedCount = results.filter((r) => r.status === "rejected").length;
-            const successCount = ids.length - failedCount;
-            if (successCount > 0) {
-                successAlert(`${successCount} product(s) deleted successfully.`);
-            }
-            if (failedCount > 0) {
-                errorAlert(`${failedCount} product(s) failed to delete.`);
-            }
+            await dispatch(bulkDeleteProducts(ids)).unwrap();
+
+            successAlert(`${ids.length} product(s) deleted successfully.`);
+
             dispatch(getProducts());
             setSelectedIds(new Set());
         } catch (err) {
-            console.error("Bulk delete failed:", err);
-            errorAlert("Failed to delete selected products.");
+            errorAlert(err || "Failed to delete selected products.");
         } finally {
             setIsBulkDeleting(false);
             setIsBulkDeletePopup(false);
