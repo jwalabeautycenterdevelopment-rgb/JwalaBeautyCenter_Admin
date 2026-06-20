@@ -53,7 +53,7 @@ export const FetchApi = async ({
       : rawText;
   } catch (err) {
     if (err.name === "AbortError")
-      throw new Error("Request timed out. Please try again.");
+      throw new Error("Request timed out. Please try again...");
     throw err;
   } finally {
     clearTimeout(timeoutId);
