@@ -271,9 +271,12 @@ const ProductsSection = () => {
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingReimport, setIsExportingReimport] = useState(false);
+    const [page, setPage] = useState(1);
+    const limit = 10;
 
     const {
         allProducts,
+        pagination,
         loadingGet: loading,
         loadingCreate,
         createSuccessMsg,
@@ -288,10 +291,14 @@ const ProductsSection = () => {
     const { allBrands } = useSelector((state) => state.brands);
 
     useEffect(() => {
-        dispatch(getProducts());
         dispatch(getSubCategory());
         dispatch(getBrands());
     }, []);
+
+
+    useEffect(() => {
+        dispatch(getProducts({ page, limit }));
+    }, [dispatch, page, limit]);
 
     useEffect(() => {
         if (createSuccessMsg) {
@@ -352,7 +359,7 @@ const ProductsSection = () => {
                     formData
                 }));
             }
-            dispatch(getProducts());
+            dispatch(getProducts({ page, limit }));
         } catch (err) {
             console.error("Failed to submit:", err);
         }
@@ -366,7 +373,8 @@ const ProductsSection = () => {
     const confirmDeleteProduct = async () => {
         if (currentProductId) {
             await dispatch(deleteProduct(currentProductId));
-            dispatch(getProducts());
+            dispatch(getProducts({ page, limit }));
+
         }
         setIsDeletePopup(false);
         setCurrentProductId(null);
@@ -540,8 +548,7 @@ const ProductsSection = () => {
             await dispatch(bulkDeleteProducts(ids)).unwrap();
 
             successAlert(`${ids.length} product(s) deleted successfully.`);
-
-            dispatch(getProducts());
+            dispatch(getProducts({ page, limit }));
             setSelectedIds(new Set());
         } catch (err) {
             errorAlert(err || "Failed to delete selected products.");
@@ -942,7 +949,43 @@ const ProductsSection = () => {
                     </div>
                 )}
             </div>
+            <div className="flex items-center justify-center gap-3 mt-8">
+                <button
+                    disabled={page === 1}
+                    onClick={() => setPage(page - 1)}
+                    className="h-12 px-6 rounded-xl border border-gray-400 bg-white text-gray-600 disabled:opacity-50"
+                >
+                    Prev
+                </button>
 
+                {Array.from({ length: pagination?.pages || 0 }, (_, i) => i + 1)
+                    .filter(
+                        (p) =>
+                            p === 1 ||
+                            p === pagination?.pages ||
+                            Math.abs(p - page) <= 1
+                    )
+                    .map((p) => (
+                        <button
+                            key={p}
+                            onClick={() => setPage(p)}
+                            className={`h-12 w-12 rounded-xl border ${page === p
+                                ? "bg-black text-white border-black"
+                                : "bg-white border-gray-400"
+                                }`}
+                        >
+                            {p}
+                        </button>
+                    ))}
+
+                <button
+                    disabled={page === pagination?.pages}
+                    onClick={() => setPage(page + 1)}
+                    className="h-12 px-6 rounded-xl border border-gray-400 bg-white disabled:opacity-50"
+                >
+                    Next
+                </button>
+            </div>
             {isDeletePopup && (
                 <ConfirmDeleteModal
                     isOpen={isDeletePopup}

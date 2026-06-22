@@ -21,13 +21,12 @@ export const createProduct = createAsyncThunk(
 
 export const getProducts = createAsyncThunk(
   "admin/product/getAll",
-  async (_, thunkAPI) => {
+  async ({ page = 1, limit = 10, search = "" } = {}, thunkAPI) => {
     try {
       const token = thunkAPI.getState()?.login?.accessToken;
       if (!token) throw new Error("No access token found");
-
       return await FetchApi({
-        endpoint: "/admin/product",
+        endpoint: `/admin/product?page=${page}&limit=${limit}&search=${search}`,
         method: "GET",
         token,
       });
@@ -155,6 +154,12 @@ const productSlice = createSlice({
     loadingBulkDelete: false,
     bulkDeleteSuccessMsg: null,
     bulkDeleteErrorMsg: null,
+    pagination: {
+      total: 0,
+      page: 1,
+      limit: 10,
+      pages: 0,
+    },
   },
   reducers: {
     clearCreateMsg(state) {
@@ -201,6 +206,12 @@ const productSlice = createSlice({
       .addCase(getProducts.fulfilled, (state, action) => {
         state.loadingGet = false;
         state.allProducts = action?.payload?.data?.products || [];
+        state.pagination = action?.payload?.data?.pagination || {
+          total: 0,
+          page: 1,
+          limit: 10,
+          pages: 0,
+        };
       })
       .addCase(getProducts.rejected, (state) => {
         state.loadingGet = false;
