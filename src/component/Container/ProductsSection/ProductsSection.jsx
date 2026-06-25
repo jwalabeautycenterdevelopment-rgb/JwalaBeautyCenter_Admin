@@ -829,30 +829,30 @@ const ProductsSection = () => {
                     </button>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    <button
+                    {/* <button
                         onClick={handleExportSelected}
                         disabled={isExporting}
                         className="flex items-center gap-2 text-sm bg-white text-slate-800 font-medium px-4 py-2 rounded-md hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <FaFileExcel size={14} />
                         {isExporting ? "Exporting..." : "Export Selected"}
-                    </button>
-                    <button
+                    </button> */}
+                    {/* <button
                         onClick={handleExportForReimport}
                         disabled={isExportingReimport}
                         className="flex items-center gap-2 text-sm bg-white text-slate-800 font-medium px-4 py-2 rounded-md hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <FaFileUpload size={14} />
                         {isExportingReimport ? "Exporting..." : "Export for Bulk Edit"}
-                    </button>
-                    <button
+                    </button> */}
+                    {/* <button
                         onClick={handleBulkDeleteClick}
                         disabled={isBulkDeleting}
                         className="flex items-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 font-medium px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <FaTrash size={14} />
                         {isBulkDeleting ? "Deleting..." : "Delete Selected"}
-                    </button>
+                    </button> */}
                 </div>
             </div>
         );
@@ -879,7 +879,7 @@ const ProductsSection = () => {
             InputOnChange={setSearch}
         >
             <div className="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto">
-                <button
+                {/* <button
                     onClick={handleExportForReimport}
                     disabled={isExportingReimport || !filteredProducts?.length}
                     className="flex items-center gap-2 text-sm bg-black/90 text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
@@ -887,15 +887,15 @@ const ProductsSection = () => {
                 >
                     <FaFileUpload size={14} />
                     {isExportingReimport ? "Exporting..." : "Export for Bulk Edit"}
-                </button>
-                <button
+                </button> */}
+                {/* <button
                     onClick={handleExportAll}
                     disabled={isExporting || !filteredProducts?.length}
                     className="flex items-center gap-2 text-sm bg-black/90 text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                     <FaDownload size={14} />
                     {isExporting ? "Exporting..." : "Export All Products"}
-                </button>
+                </button> */}
                 <div className="flex bg-gray-100 rounded-lg p-1">
                     <button
                         onClick={() => setViewMode("grid")}

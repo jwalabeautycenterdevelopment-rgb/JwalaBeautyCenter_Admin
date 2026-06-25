@@ -625,7 +625,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         <IoMdArrowRoundBack size={28} className="cursor-pointer hover:text-pink-600" onClick={backNavigation} />
                         <h2 className="text-3xl font-bold">{formData ? "Update Product" : "Add New Product"}</h2>
                     </div>
-                    <div className="flex gap-1">
+                    {/* <div className="flex gap-1">
                         <button
                             type="button"
                             onClick={downloadTemplate}
@@ -640,7 +640,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         >
                             Bulk Upload
                         </button>
-                    </div>
+                    </div> */}
 
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-8">
