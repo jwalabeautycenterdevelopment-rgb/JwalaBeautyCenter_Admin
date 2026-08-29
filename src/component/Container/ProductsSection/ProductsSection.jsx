@@ -297,9 +297,12 @@ const ProductsSection = () => {
 
 
     useEffect(() => {
+        dispatch(getProducts({ page, limit }));
         dispatch(getSubCategory());
         dispatch(getBrands());
     }, []);
+
+
 
 
     useEffect(() => {
