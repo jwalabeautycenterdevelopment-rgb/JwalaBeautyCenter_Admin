@@ -87,6 +87,30 @@ export const deleteProduct = createAsyncThunk(
   },
 );
 
+export const deleteProductImage = createAsyncThunk(
+  "admin/product/deleteImage",
+  async ({ slug, imageUrl, variantIndex }, thunkAPI) => {
+    try {
+      const token = thunkAPI.getState()?.login?.accessToken;
+      if (!token) throw new Error("No access token found");
+      const body = {
+        imageUrl,
+      };
+      if (variantIndex !== null && variantIndex !== undefined) {
+        body.variantIndex = variantIndex;
+      }
+      return await FetchApi({
+        endpoint: `/admin/product/image/${slug}`,
+        method: "DELETE",
+        token,
+        body,
+      });
+    } catch (err) {
+      return thunkAPI.rejectWithValue(err?.message);
+    }
+  },
+);
+
 export const bulkCreateProducts = createAsyncThunk(
   "admin/product/bulk-create",
   async (formData, thunkAPI) => {
@@ -151,7 +175,11 @@ const productSlice = createSlice({
     bulkCreateSuccessMsg: null,
     bulkCreateErrorMsg: null,
 
+    loadingImageDelete: false,
+    imageDeleteSuccessMsg: null,
+    imageDeleteErrorMsg: null,
     loadingBulkDelete: false,
+
     bulkDeleteSuccessMsg: null,
     bulkDeleteErrorMsg: null,
     pagination: {
@@ -181,6 +209,10 @@ const productSlice = createSlice({
     clearBulkDeleteMsg(state) {
       state.bulkDeleteSuccessMsg = null;
       state.bulkDeleteErrorMsg = null;
+    },
+    clearImageDeleteMsg(state) {
+      state.imageDeleteSuccessMsg = null;
+      state.imageDeleteErrorMsg = null;
     },
   },
   extraReducers: (builder) => {
@@ -258,6 +290,21 @@ const productSlice = createSlice({
         state.deleteErrorMsg = action?.payload || "Failed to delete product";
       })
 
+      .addCase(deleteProductImage.pending, (state) => {
+        state.loadingImageDelete = true;
+        state.imageDeleteSuccessMsg = null;
+        state.imageDeleteErrorMsg = null;
+      })
+      .addCase(deleteProductImage.fulfilled, (state, action) => {
+        state.loadingImageDelete = false;
+        state.imageDeleteSuccessMsg =
+          action?.payload?.message || "Image deleted successfully!";
+      })
+      .addCase(deleteProductImage.rejected, (state, action) => {
+        state.loadingImageDelete = false;
+        state.imageDeleteErrorMsg = action?.payload || "Failed to delete image";
+      })
+
       .addCase(bulkCreateProducts.pending, (state) => {
         state.loadingBulkCreate = true;
         state.bulkCreateSuccessMsg = null;
@@ -298,6 +345,7 @@ export const {
   clearDeleteMsg,
   clearBulkCreateMsg,
   clearBulkDeleteMsg,
+  clearImageDeleteMsg,
 } = productSlice.actions;
 
 export default productSlice.reducer;

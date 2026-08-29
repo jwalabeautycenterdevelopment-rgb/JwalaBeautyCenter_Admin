@@ -23,7 +23,9 @@ import {
     updateProduct,
     getProducts,
     deleteProduct,
-    bulkDeleteProducts
+    bulkDeleteProducts,
+    deleteProductImage,
+    clearImageDeleteMsg
 } from "../../../store/slice/productSlice";
 import { getSubCategory } from "../../../store/slice/subCategorySlice";
 import { getBrands } from "../../../store/slice/brandsSlice";
@@ -286,12 +288,14 @@ const ProductsSection = () => {
         updateErrorMsg,
         deleteSuccessMsg,
         deleteErrorMsg,
+        imageDeleteSuccessMsg,
+        imageDeleteErrorMsg,
     } = useSelector((state) => state.product);
 
     const { allSubCategories } = useSelector((state) => state.subcategory);
     const { allBrands } = useSelector((state) => state.brands);
 
-    
+
     useEffect(() => {
         dispatch(getSubCategory());
         dispatch(getBrands());
@@ -299,35 +303,49 @@ const ProductsSection = () => {
 
 
     useEffect(() => {
-        dispatch(getProducts({ page, limit }));
-    }, [dispatch, page, limit]);
-
-    useEffect(() => {
         if (createSuccessMsg) {
             successAlert(createSuccessMsg);
             dispatch(clearCreateMsg());
             setIsFormOpen(false);
+            dispatch(getProducts({ page, limit }));
         }
+
         if (createErrorMsg) {
             errorAlert(createErrorMsg);
             dispatch(clearCreateMsg());
         }
+
         if (updateSuccessMsg) {
             successAlert(updateSuccessMsg);
             dispatch(clearUpdateMsg());
             setIsFormOpen(false);
+            dispatch(getProducts({ page, limit }));
         }
+
         if (updateErrorMsg) {
             errorAlert(updateErrorMsg);
             dispatch(clearUpdateMsg());
         }
+
         if (deleteSuccessMsg) {
             successAlert(deleteSuccessMsg);
             dispatch(clearDeleteMsg());
+            dispatch(getProducts({ page, limit }));
         }
+
         if (deleteErrorMsg) {
             errorAlert(deleteErrorMsg);
             dispatch(clearDeleteMsg());
+        }
+
+        if (imageDeleteSuccessMsg) {
+            dispatch(clearImageDeleteMsg());
+            dispatch(getProducts({ page, limit }));
+        }
+
+        if (imageDeleteErrorMsg) {
+            errorAlert(imageDeleteErrorMsg);
+            dispatch(clearImageDeleteMsg());
         }
     }, [
         createSuccessMsg,
@@ -336,8 +354,66 @@ const ProductsSection = () => {
         updateErrorMsg,
         deleteSuccessMsg,
         deleteErrorMsg,
+        imageDeleteSuccessMsg,
+        imageDeleteErrorMsg,
+        dispatch,
+        page,
+        limit
+    ]);
+
+    useEffect(() => {
+        if (createSuccessMsg) {
+            successAlert(createSuccessMsg);
+            dispatch(clearCreateMsg());
+            setIsFormOpen(false);
+        }
+
+        if (createErrorMsg) {
+            errorAlert(createErrorMsg);
+            dispatch(clearCreateMsg());
+        }
+
+        if (updateSuccessMsg) {
+            successAlert(updateSuccessMsg);
+            dispatch(clearUpdateMsg());
+            setIsFormOpen(false);
+        }
+
+        if (updateErrorMsg) {
+            errorAlert(updateErrorMsg);
+            dispatch(clearUpdateMsg());
+        }
+
+        if (deleteSuccessMsg) {
+            successAlert(deleteSuccessMsg);
+            dispatch(clearDeleteMsg());
+        }
+
+        if (deleteErrorMsg) {
+            errorAlert(deleteErrorMsg);
+            dispatch(clearDeleteMsg());
+        }
+
+        if (imageDeleteSuccessMsg) {
+            dispatch(clearImageDeleteMsg());
+        }
+
+        if (imageDeleteErrorMsg) {
+            errorAlert(imageDeleteErrorMsg);
+            dispatch(clearImageDeleteMsg());
+        }
+    }, [
+        createSuccessMsg,
+        createErrorMsg,
+        updateSuccessMsg,
+        updateErrorMsg,
+        deleteSuccessMsg,
+        deleteErrorMsg,
+        imageDeleteSuccessMsg,
+        imageDeleteErrorMsg,
         dispatch
     ]);
+
 
     const handleAdd = () => {
         setIsFormOpen(true);
@@ -351,19 +427,30 @@ const ProductsSection = () => {
         setMode("update");
     };
 
-    const handleSubmit = async (formData) => {
+    const handleSubmit = async (formData, deletedImages = []) => {
         try {
-            if (mode === "add") {
-                await dispatch(createProduct(formData));
-            } else if (mode === "update" && isUpdate?._id) {
-                await dispatch(updateProduct({
-                    slug: isUpdate?.slug,
-                    formData
-                }));
+            if (isUpdate?._id) {
+                await dispatch(
+                    updateProduct({
+                        slug: isUpdate.slug,
+                        formData,
+                    })
+                ).unwrap();
+
+                for (const image of deletedImages) {
+                    await dispatch(
+                        deleteProductImage({
+                            slug: isUpdate.slug,
+                            imageUrl: image.imageUrl,
+                            variantIndex: image.variantIndex,
+                        })
+                    ).unwrap();
+                }
+            } else {
+                await dispatch(createProduct(formData)).unwrap();
             }
-            dispatch(getProducts({ page, limit }));
-        } catch (err) {
-            console.error("Failed to submit:", err);
+        } catch (error) {
+            errorAlert(error || "Something went wrong");
         }
     };
 

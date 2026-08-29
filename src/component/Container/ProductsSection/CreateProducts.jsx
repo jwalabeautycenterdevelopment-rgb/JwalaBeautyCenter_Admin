@@ -47,6 +47,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     const [keywordInput, setKeywordInput] = useState("");
     const [showBulkModal, setShowBulkModal] = useState(false);
     const [excelFile, setExcelFile] = useState(null);
+    const [deletedImages, setDeletedImages] = useState([]);
     const [previewData, setPreviewData] = useState([]);
 
 
@@ -161,7 +162,20 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     };
 
     const handleRemoveMainImage = (index) => {
-        setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+        const image = form.images[index];
+        if (typeof image === "string") {
+            setDeletedImages((prev) => [
+                ...prev,
+                {
+                    imageUrl: image,
+                    variantIndex: null,
+                },
+            ]);
+        }
+        setForm((prev) => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index),
+        }));
     };
 
     const handleVariantInputImageChange = (e) => {
@@ -191,10 +205,27 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
     };
 
     const handleRemoveExistingVariantImage = (variantIndex, imgIndex) => {
-        setForm(prev => ({
+        const image = form.variants[variantIndex].variantImage[imgIndex];
+        if (typeof image === "string") {
+            setDeletedImages((prev) => [
+                ...prev,
+                {
+                    imageUrl: image,
+                    variantIndex,
+                },
+            ]);
+        }
+        setForm((prev) => ({
             ...prev,
             variants: prev.variants.map((v, i) =>
-                i === variantIndex ? { ...v, variantImage: v.variantImage.filter((_, idx) => idx !== imgIndex) } : v
+                i === variantIndex
+                    ? {
+                        ...v,
+                        variantImage: v.variantImage.filter(
+                            (_, idx) => idx !== imgIndex
+                        ),
+                    }
+                    : v
             ),
         }));
     };
@@ -557,7 +588,7 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
             formDataToSubmit.append(`variants[${i}][stock]`, variant.stock || "");
             formDataToSubmit.append(`variants[${i}][weight]`, variant.weight || "");
         });
-        onSubmit(formDataToSubmit);
+        onSubmit(formDataToSubmit, deletedImages);
     };
 
 
