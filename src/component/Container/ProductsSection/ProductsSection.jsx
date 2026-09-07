@@ -269,6 +269,7 @@ const ProductsSection = () => {
     const [viewData, setViewData] = useState(null);
 
     const [selectedIds, setSelectedIds] = useState(new Set());
+    const [showBulkOption, setShowBulkOption] = useState(false);
     const [isBulkDeletePopup, setIsBulkDeletePopup] = useState(false);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
@@ -954,9 +955,10 @@ const ProductsSection = () => {
         return (
             <ProductForm
                 onSubmit={handleSubmit}
-                backNavigation={() => setIsFormOpen(false)}
+                backNavigation={() => { setIsFormOpen(false); setShowBulkOption(false) }}
                 loading={loadingCreate}
                 formData={isUpdate}
+                showBulkOption={showBulkOption}
             />
         );
     }
@@ -1041,42 +1043,54 @@ const ProductsSection = () => {
                     </div>
                 )}
             </div>
-            <div className="flex items-center justify-center gap-3 mt-8">
-                <button
-                    disabled={page === 1}
-                    onClick={() => setPage(page - 1)}
-                    className="h-12 px-6 rounded-xl border border-gray-400 bg-white text-gray-600 disabled:opacity-50"
-                >
-                    Prev
-                </button>
+            <div className="flex flex-row items-end justify-between">
+                <div className="flex items-end justify-left gap-3 mt-8">
+                    <button
+                        className="text-[#f4f1f2] cursor-progress select-none"
+                        onClick={() => setShowBulkOption(true)}
+                    >
+                        ___
+                    </button>
+                </div>
+                <div className="flex items-center justify-center gap-3 mt-8">
+                    <button
+                        disabled={page === 1}
+                        onClick={() => setPage(page - 1)}
+                        className="h-12 px-6 rounded-xl border border-gray-400 bg-white text-gray-600 disabled:opacity-50"
+                    >
+                        Prev
+                    </button>
 
-                {Array.from({ length: pagination?.pages || 0 }, (_, i) => i + 1)
-                    .filter(
-                        (p) =>
-                            p === 1 ||
-                            p === pagination?.pages ||
-                            Math.abs(p - page) <= 1
-                    )
-                    .map((p) => (
-                        <button
-                            key={p}
-                            onClick={() => setPage(p)}
-                            className={`h-12 w-12 rounded-xl border ${page === p
-                                ? "bg-black text-white border-black"
-                                : "bg-white border-gray-400"
-                                }`}
-                        >
-                            {p}
-                        </button>
-                    ))}
+                    {Array.from({ length: pagination?.pages || 0 }, (_, i) => i + 1)
+                        .filter(
+                            (p) =>
+                                p === 1 ||
+                                p === pagination?.pages ||
+                                Math.abs(p - page) <= 1
+                        )
+                        .map((p) => (
+                            <button
+                                key={p}
+                                onClick={() => setPage(p)}
+                                className={`h-12 w-12 rounded-xl border ${page === p
+                                    ? "bg-black text-white border-black"
+                                    : "bg-white border-gray-400"
+                                    }`}
+                            >
+                                {p}
+                            </button>
+                        ))}
 
-                <button
-                    disabled={page === pagination?.pages}
-                    onClick={() => setPage(page + 1)}
-                    className="h-12 px-6 rounded-xl border border-gray-400 bg-white disabled:opacity-50"
-                >
-                    Next
-                </button>
+                    <button
+                        disabled={page === pagination?.pages}
+                        onClick={() => setPage(page + 1)}
+                        className="h-12 px-6 rounded-xl border border-gray-400 bg-white disabled:opacity-50"
+                    >
+                        Next
+                    </button>
+                </div>
+                <div>
+                </div>
             </div>
             {isDeletePopup && (
                 <ConfirmDeleteModal

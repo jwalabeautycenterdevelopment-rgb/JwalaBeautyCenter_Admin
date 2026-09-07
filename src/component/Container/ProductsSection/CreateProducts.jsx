@@ -18,7 +18,7 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 
-const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
+const ProductForm = ({ onSubmit, backNavigation, formData, loading, showBulkOption }) => {
     const dispatch = useDispatch();
     const { allSubCategories } = useSelector((state) => state.subcategory);
     const { allBrands } = useSelector((state) => state.brands);
@@ -656,22 +656,27 @@ const ProductForm = ({ onSubmit, backNavigation, formData, loading }) => {
                         <IoMdArrowRoundBack size={28} className="cursor-pointer hover:text-pink-600" onClick={backNavigation} />
                         <h2 className="text-3xl font-bold">{formData ? "Update Product" : "Add New Product"}</h2>
                     </div>
-                    {/* <div className="flex gap-1">
-                        <button
-                            type="button"
-                            onClick={downloadTemplate}
-                            className="px-5 py-2 bg-black text-sm cursor-pointer text-white rounded-lg"
-                        >
-                            Download Template
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setShowBulkModal(true)}
-                            className="px-5 py-2 bg-black text-sm text-white cursor-pointer rounded-lg cursor-pointer"
-                        >
-                            Bulk Upload
-                        </button>
-                    </div> */}
+                    {
+                        showBulkOption && !formData && (
+                            <div className="flex gap-1">
+                                <button
+                                    type="button"
+                                    onClick={downloadTemplate}
+                                    className="px-5 py-2 bg-black text-sm cursor-pointer text-white rounded-lg"
+                                >
+                                    Download Template
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowBulkModal(true)}
+                                    className="px-5 py-2 bg-black text-sm text-white cursor-pointer rounded-lg cursor-pointer"
+                                >
+                                    Bulk Upload
+                                </button>
+                            </div>
+
+                        )
+                    }
 
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-8">
