@@ -275,7 +275,7 @@ const ProductsSection = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [isExportingReimport, setIsExportingReimport] = useState(false);
     const [page, setPage] = useState(1);
-    const limit = 10;
+    const limit = 50;
 
 
     const {
@@ -298,11 +298,13 @@ const ProductsSection = () => {
 
 
     useEffect(() => {
-        dispatch(getProducts({ page, limit }));
         dispatch(getSubCategory());
         dispatch(getBrands());
-    }, []);
+    }, [dispatch]);
 
+    useEffect(() => {
+        dispatch(getProducts({ page, limit }));
+    }, [page, limit, dispatch]);
 
 
 
