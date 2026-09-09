@@ -538,6 +538,7 @@ const ProductsSection = () => {
 
     const handleClearSelection = useCallback(() => {
         setSelectedIds(new Set());
+        setShowBulkOption(false);
     }, []);
 
     useEffect(() => {
@@ -923,32 +924,32 @@ const ProductsSection = () => {
                         Clear Selection
                     </button>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    {/* <button
+                {showBulkOption && <div className="flex flex-wrap items-center gap-2">
+                   <button
                         onClick={handleExportSelected}
                         disabled={isExporting}
                         className="flex items-center gap-2 text-sm bg-white text-slate-800 font-medium px-4 py-2 rounded-md hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <FaFileExcel size={14} />
                         {isExporting ? "Exporting..." : "Export Selected"}
-                    </button> */}
-                    {/* <button
+                    </button>
+                    <button
                         onClick={handleExportForReimport}
                         disabled={isExportingReimport}
                         className="flex items-center gap-2 text-sm bg-white text-slate-800 font-medium px-4 py-2 rounded-md hover:bg-slate-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <FaFileUpload size={14} />
                         {isExportingReimport ? "Exporting..." : "Export for Bulk Edit"}
-                    </button> */}
-                    {/* <button
+                    </button>
+                    <button
                         onClick={handleBulkDeleteClick}
                         disabled={isBulkDeleting}
                         className="flex items-center gap-2 text-sm bg-red-600 text-white hover:bg-red-700 font-medium px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         <FaTrash size={14} />
                         {isBulkDeleting ? "Deleting..." : "Delete Selected"}
-                    </button> */}
-                </div>
+                    </button>
+                </div>}
             </div>
         );
     };
